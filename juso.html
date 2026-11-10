@@ -60,7 +60,7 @@ async function search(keyword, page) {
     + "&countPerPage=" + PER_PAGE
     + "&keyword=" + encodeURIComponent(keyword)
     + "&resultType=json"
-    + "&hstryYn=N&firstSort=road";
+    + "&hstryYn=N&firstSort=road&addInfoYn=Y";
   try {
     let data = await jsonp(url);
     if (typeof data === "string") data = JSON.parse(data);

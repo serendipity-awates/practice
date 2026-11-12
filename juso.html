@@ -82,6 +82,12 @@
   .tel:hover { background: var(--accent); color: #fff; }
   .tel.muted { color: var(--sub); border-color: var(--line); font-size: 13px; font-weight: 500; }
   .tel:empty { display: none; }
+  .tel-lbl { display: block; margin-top: 10px; font-size: 12px; font-weight: 700; color: var(--accent-dark); }
+  .tel-lbl[hidden], .tel-copy[hidden] { display: none; }
+  .telrow { display: flex; justify-content: center; align-items: center; gap: 6px; }
+  .telrow .tel { margin-top: 4px; }
+  .tel-lbl:not([hidden]) + .telrow .tel { margin-top: 4px; }
+  .tel-copy { margin-top: 4px; padding: 6px 10px; font-size: 13px; }
 
   .actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
 
@@ -220,7 +226,11 @@ function render(r) {
           <small>관할 행정동</small>
           <strong>${esc(hdong || "정보 없음")}</strong>
           <em>${esc(j.siNm)} ${esc(j.sggNm)}</em>
-          <a class="tel"></a>
+          <span class="tel-lbl" hidden>주민센터 대표전화</span>
+          <div class="telrow">
+            <button type="button" class="btn sm tel-copy" hidden>복사</button>
+            <a class="tel"></a>
+          </div>
         </div>
       </div>
       <div class="actions">
@@ -239,7 +249,7 @@ function render(r) {
         <div class="note"></div>
       </div>`;
     const juris = `${j.siNm} ${j.sggNm} ${hdong}`.trim();
-    if (hdong) showTel(card.querySelector(".tel"), j, hdong);
+    if (hdong) showTel(card.querySelector(".tel"), j, hdong, card.querySelector(".tel-lbl"), card.querySelector(".tel-copy"));
     if (hdong) showCenter(card.querySelector(".center"), j, hdong);
     card.querySelector(".copy-road").onclick = () => copy(j.roadAddr);
     card.querySelector(".copy-jibun").onclick = () => copy(j.jibunAddr);
@@ -325,11 +335,13 @@ function findTel(j, hdong) {
     });
   }));
 }
-async function showTel(el, j, hdong) {
+async function showTel(el, j, hdong, lbl, copyBtn) {
   try {
     const p = await findTel(j, hdong);
     if (p) {
       el.textContent = "☎ " + p.phone;
+      lbl.hidden = false; copyBtn.hidden = false;
+      copyBtn.onclick = () => copy(p.phone);
       el.href = "tel:" + p.phone.replace(/[^0-9]/g, "");
       el.title = p.place_name + " (카카오맵 기준, 참고용)";
     } else {

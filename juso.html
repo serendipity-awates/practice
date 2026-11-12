@@ -244,7 +244,7 @@ function render(r) {
     const status = card.querySelector(".no-ho");
     probeDetail(j).then(pr => {
       if (pr.hasHo) { status.remove(); btn.hidden = false; }
-      else { status.classList.remove("loading"); status.textContent = "이 건물은 등록된 호 정보가 없습니다."; }
+      else { status.classList.remove("loading"); status.textContent = "등록된 상세주소가 없습니다."; }
     }, e => { status.classList.remove("loading"); status.textContent = "상세주소 조회 오류: " + e.message; });
     btn.onclick = () => {
       box.hidden = !box.hidden;
@@ -391,7 +391,7 @@ async function initDetail(j, box, juris) {
         fill(sFloor, "층 정보 없음", []);
         fillHo();
       }
-      if (!rows.some(r => r.hoNm)) note.textContent = "이 건물은 등록된 호 정보가 없습니다.";
+      if (!rows.some(r => r.hoNm)) note.textContent = "등록된 상세주소가 없습니다.";
     } catch (e) { fill(sFloor, "오류", []); note.textContent = "상세주소 오류: " + e.message; }
   };
 

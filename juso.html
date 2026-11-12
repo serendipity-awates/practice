@@ -202,7 +202,8 @@ function render(r) {
   setMsg(total ? `검색 결과 ${total.toLocaleString()}건` : "검색 결과가 없습니다. 주소를 다시 확인해 주세요.");
 
   (r.juso || []).forEach(j => {
-    const hdong = j.hemdNm || "";
+    // hemdNm 은 "서울특별시 영등포구 신길제1동"처럼 시·군·구까지 붙어서 오므로 마지막 단어(행정동)만 사용
+    const hdong = String(j.hemdNm || "").trim().split(/\s+/).pop() || "";
     const card = document.createElement("div");
     card.className = "card";
     card.innerHTML = `

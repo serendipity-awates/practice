@@ -9,14 +9,14 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap">
 <style>
   :root {
-    --bg: #f5ede1;
-    --card: #fffaf2;
+    --bg: #F7F2E4;
+    --card: #FFFDF8;
     --line: #e6d6bf;
     --ink: #2f241b;
     --sub: #7a6553;
-    --accent: #b5562b;
-    --accent-dark: #8f3f1c;
-    --accent-soft: #fbe6d4;
+    --accent: #6A1629;
+    --accent-dark: #4A0E1C;
+    --accent-soft: #F6EED9;
     --chip: #f1e4d1;
   }
   * { box-sizing: border-box; }
@@ -72,21 +72,21 @@
   .mini:hover { border-color: var(--accent); color: var(--accent); }
   .mini.map { color: var(--accent-dark); }
   .center:empty { display: none; }
-  .meta { margin-top: 8px; padding-left: 64px; color: var(--sub); font-size: 16px; font-weight: 500; line-height: 1.6; }
+  .meta { margin-top: 8px; padding-left: 64px; color: #3C3C3C; font-size: 16px; font-weight: 500; line-height: 1.6; }
   .meta b { color: var(--ink); font-weight: 700; margin-right: 4px; }
   .meta i { font-style: normal; margin: 0 8px; color: var(--line); }
 
   .hdong {
     flex-shrink: 0; min-width: 170px; text-align: center; padding: 12px 16px;
-    background: var(--accent-soft); border: 2px solid #f0c8a6; border-radius: 14px;
+    background: var(--accent-soft); border: 2px solid #E3D3B1; border-radius: 14px;
   }
   .hdong small { display: block; font-size: 12px; font-weight: 700; color: var(--accent-dark); }
   .hdong strong { display: block; margin-top: 2px; font-size: 24px; font-weight: 900; color: var(--accent); }
-  .hdong em { display: block; font-style: normal; font-size: 12px; color: var(--sub); margin-top: 2px; }
+  .hdong em { display: block; font-style: normal; font-size: 13px; font-weight: 700; color: #3A2F2A; margin-top: 2px; }
   .tel { display: inline-block; margin-top: 8px; padding: 5px 12px; border-radius: 999px; background: #fff;
-         color: var(--accent-dark); font-size: 15px; font-weight: 700; text-decoration: none; border: 1px solid #f0c8a6; }
+         color: var(--accent-dark); font-size: 15px; font-weight: 700; text-decoration: none; border: 1px solid #E3D3B1; }
   .tel:hover { background: var(--accent); color: #fff; }
-  .rel { margin-top: 4px; padding-left: 64px; font-size: 15px; color: var(--sub); line-height: 1.5; word-break: keep-all; }
+  .rel { margin-top: 4px; padding-left: 64px; font-size: 15px; color: #3C3C3C; line-height: 1.5; word-break: keep-all; }
   .rel b { color: var(--ink); font-weight: 700; margin-right: 6px; }
   .tel.muted { color: var(--sub); border-color: var(--line); font-size: 13px; font-weight: 500; }
   .tel:empty { display: none; }
@@ -110,7 +110,7 @@
   .selects label { display: block; font-size: 12px; font-weight: 700; color: var(--sub); margin: 0 0 4px 4px; }
   select {
     width: 100%; padding: 12px 38px 12px 14px; font: inherit; font-size: 16px; font-weight: 700; color: var(--ink);
-    background: #fffdf9 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23b5562b' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 14px center;
+    background: #fffdf9 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%236A1629' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 14px center;
     border: 2px solid var(--line); border-radius: 12px; appearance: none; cursor: pointer;
   }
   select:focus { outline: none; border-color: var(--accent); }

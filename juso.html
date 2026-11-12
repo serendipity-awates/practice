@@ -85,6 +85,9 @@
 
   .actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
 
+  .no-ho { align-self: center; padding: 8px 12px; border-radius: 10px; background: #f3ece2; color: var(--sub);
+           font-size: 14px; font-weight: 700; }
+  .no-ho.loading { background: transparent; font-weight: 500; }
   .detail { margin-top: 14px; padding: 16px; border-radius: 14px; background: #fff; border: 1px dashed var(--line); }
   .detail[hidden] { display: none; }
   .selects { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
@@ -221,7 +224,8 @@ function render(r) {
       </div>
       <div class="actions">
         <button type="button" class="btn sm copy-btn">주소 + 행정동 복사</button>
-        <button type="button" class="btn sm ghost detail-btn">상세주소(동·층·호) 보기 ▾</button>
+        <button type="button" class="btn sm ghost detail-btn" hidden>상세주소(동·층·호) 보기 ▾</button>
+        <span class="no-ho loading">상세주소 확인 중…</span>
       </div>
       <div class="detail" hidden>
         <div class="selects">
@@ -237,6 +241,11 @@ function render(r) {
     if (hdong) showCenter(card.querySelector(".center"), j, hdong);
     card.querySelector(".copy-btn").onclick = () => copy(`${j.roadAddr}\n관할: ${juris}`);
     const btn = card.querySelector(".detail-btn"), box = card.querySelector(".detail");
+    const status = card.querySelector(".no-ho");
+    probeDetail(j).then(pr => {
+      if (pr.hasHo) { status.remove(); btn.hidden = false; }
+      else { status.classList.remove("loading"); status.textContent = "이 건물은 등록된 호 정보가 없습니다."; }
+    }, e => { status.classList.remove("loading"); status.textContent = "상세주소 조회 오류: " + e.message; });
     btn.onclick = () => {
       box.hidden = !box.hidden;
       btn.textContent = box.hidden ? "상세주소(동·층·호) 보기 ▾" : "상세주소 접기 ▴";
@@ -336,6 +345,17 @@ function fill(sel, placeholder, items) {
   sel.disabled = items.length === 0;
 }
 
+// 검색 결과가 나오자마자 호 정보가 있는 건물인지 미리 확인 (결과는 상세주소 열 때 재사용)
+function probeDetail(j) {
+  return j._probe ||= (async () => {
+    const dongs = [...new Set(((await call("addrDetailApiJsonp.do", detailParams(j, "dong"))).juso || []).map(d => d.dongNm || ""))];
+    const named = dongs.filter(Boolean);
+    if (named.length) return { dongs, named, hasHo: true, emptyRows: null };
+    const emptyRows = (await call("addrDetailApiJsonp.do", detailParams(j, "floorho", { dongNm: "" }))).juso || [];
+    return { dongs, named, hasHo: emptyRows.some(r => r.hoNm), emptyRows };
+  })();
+}
+
 async function initDetail(j, box, juris) {
   const sDong = box.querySelector(".s-dong"), sFloor = box.querySelector(".s-floor"), sHo = box.querySelector(".s-ho");
   const full = box.querySelector(".full"), fullText = full.querySelector("span"), note = box.querySelector(".note");
@@ -359,10 +379,10 @@ async function initDetail(j, box, juris) {
     full.hidden = true;
   };
 
-  const loadFloors = async dong => {
+  const loadFloors = async (dong, preloaded) => {
     fill(sFloor, "불러오는 중…", []); fill(sHo, "호 선택", []); full.hidden = true; note.textContent = "";
     try {
-      rows = (await call("addrDetailApiJsonp.do", detailParams(j, "floorho", { dongNm: dong }))).juso || [];
+      rows = preloaded || (await call("addrDetailApiJsonp.do", detailParams(j, "floorho", { dongNm: dong }))).juso || [];
       const floors = [...new Set(rows.map(r => r.floorNm || ""))].filter(Boolean);
       if (floors.length) {
         fill(sFloor, "층을 선택하세요", floors.map(f => [f, f]));
@@ -376,11 +396,10 @@ async function initDetail(j, box, juris) {
   };
 
   try {
-    const dongs = [...new Set(((await call("addrDetailApiJsonp.do", detailParams(j, "dong"))).juso || []).map(d => d.dongNm || ""))];
-    const named = dongs.filter(Boolean);
+    const { dongs, named, emptyRows } = await probeDetail(j);
     if (named.length === 0) {
       sDong.innerHTML = `<option value="">"동" 표기 없음</option>`; sDong.disabled = true;
-      loadFloors("");
+      loadFloors("", emptyRows);
     } else {
       fill(sDong, "동을 선택하세요", named.map(d => [d, d]));
       if (dongs.includes("")) sDong.insertAdjacentHTML("beforeend", `<option value="__none__">"동" 표기 없음</option>`);

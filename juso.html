@@ -4,7 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>관할 행정동 찾기</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap">
 <style>
   :root {
     --bg: #f5ede1;
@@ -20,11 +22,11 @@
   * { box-sizing: border-box; }
   body {
     margin: 0; background: var(--bg); color: var(--ink);
-    font-family: "Pretendard", -apple-system, "Malgun Gothic", sans-serif;
-    font-weight: 600; letter-spacing: -0.01em;
+    font-family: "Noto Sans KR", "Malgun Gothic", sans-serif;
+    font-weight: 500; letter-spacing: -0.02em;
   }
   .wrap { max-width: 920px; margin: 0 auto; padding: 36px 16px 60px; }
-  header h1 { margin: 0; font-size: 30px; font-weight: 800; }
+  header h1 { margin: 0; font-size: 30px; font-weight: 900; }
   header h1 span { color: var(--accent); }
   header p { margin: 6px 0 22px; color: var(--sub); font-size: 15px; font-weight: 500; }
 
@@ -36,7 +38,7 @@
   #q:focus { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
   #q::placeholder { color: #b9a691; font-weight: 500; }
   .btn {
-    font: inherit; font-weight: 800; border: 0; border-radius: 12px; cursor: pointer;
+    font: inherit; font-weight: 900; border: 0; border-radius: 12px; cursor: pointer;
     background: var(--accent); color: #fff; transition: background .15s;
   }
   .btn:hover { background: var(--accent-dark); }
@@ -54,8 +56,8 @@
   }
   .top { display: flex; gap: 18px; align-items: flex-start; }
   .addr { flex: 1; min-width: 0; }
-  .road { font-size: 20px; font-weight: 800; line-height: 1.4; word-break: keep-all; }
-  .meta { margin-top: 6px; color: var(--sub); font-size: 14px; font-weight: 600; line-height: 1.6; }
+  .road { font-size: 20px; font-weight: 900; line-height: 1.4; word-break: keep-all; }
+  .meta { margin-top: 6px; color: var(--sub); font-size: 14px; font-weight: 500; line-height: 1.6; }
   .meta b { color: var(--ink); font-weight: 700; margin-right: 4px; }
   .meta i { font-style: normal; margin: 0 8px; color: var(--line); }
 
@@ -66,6 +68,11 @@
   .hdong small { display: block; font-size: 12px; font-weight: 700; color: var(--accent-dark); }
   .hdong strong { display: block; margin-top: 2px; font-size: 24px; font-weight: 900; color: var(--accent); }
   .hdong em { display: block; font-style: normal; font-size: 12px; color: var(--sub); margin-top: 2px; }
+  .tel { display: inline-block; margin-top: 8px; padding: 5px 12px; border-radius: 999px; background: #fff;
+         color: var(--accent-dark); font-size: 15px; font-weight: 700; text-decoration: none; border: 1px solid #f0c8a6; }
+  .tel:hover { background: var(--accent); color: #fff; }
+  .tel.muted { color: var(--sub); border-color: var(--line); font-size: 13px; font-weight: 500; }
+  .tel:empty { display: none; }
 
   .actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
 
@@ -82,7 +89,7 @@
   select:disabled { color: #b9a691; cursor: default; background-color: #f8f2ea; }
   .full {
     display: flex; align-items: center; gap: 10px; margin-top: 12px; padding: 12px 14px;
-    background: var(--accent-soft); border-radius: 12px; font-size: 16px; font-weight: 800;
+    background: var(--accent-soft); border-radius: 12px; font-size: 16px; font-weight: 900;
   }
   .full span { flex: 1; word-break: keep-all; }
   .full[hidden] { display: none; }
@@ -128,6 +135,8 @@
 const CONFM_KEY = "U01TX0FVVEgyMDI2MTExMDIxMjUyODEyMTA4OTQ=";
 // 상세주소 검색 API 승인키
 const DETAIL_KEY = "U01TX0FVVEgyMDI2MTExMDIyMzMyMDEyMTA5MDI=";
+// ▼ 카카오 JavaScript 키 (주민센터 전화번호 조회용, developers.kakao.com)
+const KAKAO_KEY = "여기에_카카오_JavaScript_키";
 const API = "https://business.juso.go.kr/addrlink/";
 const PER_PAGE = 20;
 let curKeyword = "", curPage = 1;
@@ -196,6 +205,7 @@ function render(r) {
           <small>관할 행정동</small>
           <strong>${esc(hdong || "정보 없음")}</strong>
           <em>${esc(j.siNm)} ${esc(j.sggNm)}</em>
+          <a class="tel"></a>
         </div>
       </div>
       <div class="actions">
@@ -212,6 +222,7 @@ function render(r) {
         <div class="note"></div>
       </div>`;
     const juris = `${j.siNm} ${j.sggNm} ${hdong}`.trim();
+    if (hdong) showTel(card.querySelector(".tel"), j, hdong);
     card.querySelector(".copy-btn").onclick = () => copy(`${j.roadAddr}\n관할: ${juris}`);
     const btn = card.querySelector(".detail-btn"), box = card.querySelector(".detail");
     btn.onclick = () => {
@@ -234,6 +245,52 @@ function render(r) {
     pager.append(`${curPage} / ${pages}`);
     if (curPage < pages) add("다음 ▶", curPage + 1);
   }
+}
+
+// ===== 주민센터 전화번호 (카카오 장소 검색) =====
+let kakaoReady = null;
+function loadKakao() {
+  if (kakaoReady) return kakaoReady;
+  kakaoReady = new Promise((resolve, reject) => {
+    if (!KAKAO_KEY || KAKAO_KEY.startsWith("여기에")) return reject(new Error("no key"));
+    const s = document.createElement("script");
+    s.src = "https://dapi.kakao.com/v2/maps/sdk.js?autoload=false&libraries=services&appkey=" + encodeURIComponent(KAKAO_KEY);
+    s.onload = () => kakao.maps.load(() => resolve(new kakao.maps.services.Places()));
+    s.onerror = () => reject(new Error("load fail"));
+    document.head.appendChild(s);
+  });
+  return kakaoReady;
+}
+// "신길제1동" ↔ "신길1동주민센터" 처럼 표기가 달라도 맞춰보기 위한 정규화
+const norm = s => String(s || "").replace(/\s/g, "").replace(/제(\d)/g, "$1").replace(/[·.]/g, "");
+const telCache = {};
+function findTel(j, hdong) {
+  const key = j.sggNm + "|" + hdong;
+  if (telCache[key]) return telCache[key];
+  return telCache[key] = loadKakao().then(places => new Promise(resolve => {
+    places.keywordSearch(`${j.siNm} ${j.sggNm} ${hdong} 주민센터`, (data, status) => {
+      if (status !== kakao.maps.services.Status.OK) return resolve(null);
+      const target = norm(hdong);
+      const hit = data.find(p => p.phone && norm(p.place_name).startsWith(target) &&
+                                 /주민센터|행정복지센터|사무소/.test(p.place_name) &&
+                                 p.address_name.includes(j.sggNm));
+      resolve(hit || null);
+    });
+  }));
+}
+async function showTel(el, j, hdong) {
+  try {
+    const p = await findTel(j, hdong);
+    if (p) {
+      el.textContent = "☎ " + p.phone;
+      el.href = "tel:" + p.phone.replace(/[^0-9]/g, "");
+      el.title = p.place_name + " (카카오맵 기준, 참고용)";
+    } else {
+      el.textContent = "전화번호 찾기 ↗"; el.classList.add("muted");
+      el.href = "https://map.kakao.com/?q=" + encodeURIComponent(`${j.sggNm} ${hdong} 주민센터`);
+      el.target = "_blank";
+    }
+  } catch { /* 키가 없거나 로드 실패 → 표시 안 함 */ }
 }
 
 // ===== 상세주소 (동 → 층 → 호 드롭다운) =====

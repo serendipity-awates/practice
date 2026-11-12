@@ -3,185 +3,321 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>주소 → 행정동 조회</title>
+<title>관할 행정동 찾기</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <style>
-  body { font-family: -apple-system, "Malgun Gothic", sans-serif; max-width: 900px; margin: 24px auto; padding: 0 16px; background:#fafafa; color:#222; }
-  h1 { font-size: 20px; }
-  form { display:flex; gap:8px; margin-bottom:16px; }
-  input[type=text] { flex:1; padding:10px; font-size:16px; border:1px solid #ccc; border-radius:6px; }
-  button { padding:10px 18px; font-size:16px; border:0; border-radius:6px; background:#2563eb; color:#fff; cursor:pointer; }
-  .item { background:#fff; border:1px solid #e5e5e5; border-radius:8px; padding:12px 14px; margin-bottom:10px; }
-  .road { font-weight:600; }
-  .jibun { color:#666; font-size:14px; margin-top:2px; }
-  .hdong { margin-top:8px; font-size:15px; }
-  .hdong b { color:#dc2626; font-size:17px; }
-  .tag { display:inline-block; background:#eef2ff; color:#3730a3; border-radius:4px; padding:1px 6px; font-size:12px; margin-right:6px; }
-  .copy, .detail-btn { margin-left:8px; font-size:12px; padding:3px 8px; background:#e5e7eb; color:#111; }
-  .detail { margin-top:10px; padding-top:10px; border-top:1px dashed #ddd; font-size:14px; }
-  .detail:empty { display:none; }
-  .detail .row { margin:6px 0; }
-  .chip { display:inline-block; margin:3px; padding:4px 10px; font-size:13px; border:1px solid #d1d5db; border-radius:14px; background:#fff; color:#111; cursor:pointer; }
-  .chip.on { background:#2563eb; color:#fff; border-color:#2563eb; }
-  .floor { color:#666; font-size:12px; margin-right:4px; }
-  #msg { color:#666; margin:8px 0; }
-  #pager button { background:#e5e7eb; color:#111; margin-right:4px; }
+  :root {
+    --bg: #f5ede1;
+    --card: #fffaf2;
+    --line: #e6d6bf;
+    --ink: #2f241b;
+    --sub: #7a6553;
+    --accent: #b5562b;
+    --accent-dark: #8f3f1c;
+    --accent-soft: #fbe6d4;
+    --chip: #f1e4d1;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: "Pretendard", -apple-system, "Malgun Gothic", sans-serif;
+    font-weight: 600; letter-spacing: -0.01em;
+  }
+  .wrap { max-width: 920px; margin: 0 auto; padding: 36px 16px 60px; }
+  header h1 { margin: 0; font-size: 30px; font-weight: 800; }
+  header h1 span { color: var(--accent); }
+  header p { margin: 6px 0 22px; color: var(--sub); font-size: 15px; font-weight: 500; }
+
+  form { display: flex; gap: 10px; }
+  #q {
+    flex: 1; min-width: 0; padding: 16px 20px; font: inherit; font-size: 18px; font-weight: 700;
+    color: var(--ink); background: #fff; border: 2px solid var(--line); border-radius: 14px; outline: none;
+  }
+  #q:focus { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+  #q::placeholder { color: #b9a691; font-weight: 500; }
+  .btn {
+    font: inherit; font-weight: 800; border: 0; border-radius: 12px; cursor: pointer;
+    background: var(--accent); color: #fff; transition: background .15s;
+  }
+  .btn:hover { background: var(--accent-dark); }
+  form .btn { padding: 0 28px; font-size: 18px; }
+  .btn.ghost { background: var(--chip); color: var(--ink); }
+  .btn.ghost:hover { background: #e8d7bf; }
+  .btn.sm { padding: 8px 14px; font-size: 14px; }
+
+  #msg { margin: 18px 4px 10px; color: var(--sub); font-size: 15px; }
+  #msg.err { color: #b42318; font-weight: 700; }
+
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 18px;
+    padding: 20px 22px; margin-bottom: 14px; box-shadow: 0 2px 0 rgba(120, 90, 50, .06);
+  }
+  .top { display: flex; gap: 18px; align-items: flex-start; }
+  .addr { flex: 1; min-width: 0; }
+  .road { font-size: 20px; font-weight: 800; line-height: 1.4; word-break: keep-all; }
+  .meta { margin-top: 6px; color: var(--sub); font-size: 14px; font-weight: 600; line-height: 1.6; }
+  .meta b { color: var(--ink); font-weight: 700; margin-right: 4px; }
+  .meta i { font-style: normal; margin: 0 8px; color: var(--line); }
+
+  .hdong {
+    flex-shrink: 0; min-width: 170px; text-align: center; padding: 12px 16px;
+    background: var(--accent-soft); border: 2px solid #f0c8a6; border-radius: 14px;
+  }
+  .hdong small { display: block; font-size: 12px; font-weight: 700; color: var(--accent-dark); }
+  .hdong strong { display: block; margin-top: 2px; font-size: 24px; font-weight: 900; color: var(--accent); }
+  .hdong em { display: block; font-style: normal; font-size: 12px; color: var(--sub); margin-top: 2px; }
+
+  .actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+
+  .detail { margin-top: 14px; padding: 16px; border-radius: 14px; background: #fff; border: 1px dashed var(--line); }
+  .detail[hidden] { display: none; }
+  .selects { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .selects label { display: block; font-size: 12px; font-weight: 700; color: var(--sub); margin: 0 0 4px 4px; }
+  select {
+    width: 100%; padding: 12px 38px 12px 14px; font: inherit; font-size: 16px; font-weight: 700; color: var(--ink);
+    background: #fffdf9 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23b5562b' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 14px center;
+    border: 2px solid var(--line); border-radius: 12px; appearance: none; cursor: pointer;
+  }
+  select:focus { outline: none; border-color: var(--accent); }
+  select:disabled { color: #b9a691; cursor: default; background-color: #f8f2ea; }
+  .full {
+    display: flex; align-items: center; gap: 10px; margin-top: 12px; padding: 12px 14px;
+    background: var(--accent-soft); border-radius: 12px; font-size: 16px; font-weight: 800;
+  }
+  .full span { flex: 1; word-break: keep-all; }
+  .full[hidden] { display: none; }
+  .note { margin-top: 8px; font-size: 13px; color: var(--sub); font-weight: 500; }
+
+  #pager { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 16px; color: var(--sub); }
+  .toast {
+    position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%) translateY(20px);
+    background: var(--ink); color: #fff; padding: 12px 20px; border-radius: 999px; font-weight: 700;
+    opacity: 0; transition: .2s; pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 640px) {
+    header h1 { font-size: 24px; }
+    .top { flex-direction: column; }
+    .hdong { width: 100%; }
+    .selects { grid-template-columns: 1fr; }
+    form .btn { padding: 0 18px; }
+  }
 </style>
 </head>
 <body>
-<h1>주소 → 관할 행정동 조회</h1>
-<form id="f">
-  <input type="text" id="q" placeholder="도로명, 건물명, 지번 (예: 세종대로 110)" autofocus>
-  <button>검색</button>
-</form>
-<div id="msg"></div>
-<div id="list"></div>
-<div id="pager"></div>
+<div class="wrap">
+  <header>
+    <h1>관할 <span>행정동</span> 찾기</h1>
+    <p>전입신고 · 임대차신고 관할 주민센터를 바로 확인하세요</p>
+  </header>
+
+  <form id="f">
+    <input type="text" id="q" placeholder="도로명, 건물명, 지번 (예: 신길동 51-3)" autofocus>
+    <button class="btn">검색</button>
+  </form>
+
+  <div id="msg"></div>
+  <div id="list"></div>
+  <div id="pager"></div>
+</div>
+<div class="toast" id="toast">복사했어요</div>
 
 <script>
 // 도로명주소 검색 API 승인키 (business.juso.go.kr)
 const CONFM_KEY = "U01TX0FVVEgyMDI2MTExMDIxMjUyODEyMTA4OTQ=";
-// ▼ "U01TX0FVVEgyMDI2MTExMDIyMzMyMDEyMTA5MDI=" 승인키를 아래 따옴표 안에 넣으세요 (검색 API 키와 다른 키)
+// 상세주소 검색 API 승인키
 const DETAIL_KEY = "U01TX0FVVEgyMDI2MTExMDIyMzMyMDEyMTA5MDI=";
 const API = "https://business.juso.go.kr/addrlink/";
 const PER_PAGE = 20;
 let curKeyword = "", curPage = 1;
 
+const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-// juso API는 브라우저에서 JSONP 방식으로 호출 가능 (공식 샘플과 동일한 방식)
+function toast(text) {
+  const t = $("toast"); t.textContent = text; t.classList.add("show");
+  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 1400);
+}
+function copy(text) { navigator.clipboard.writeText(text).then(() => toast("복사했어요")); }
+
+// juso API는 JSONP 방식으로 브라우저에서 바로 호출
 function jsonp(url) {
   return new Promise((resolve, reject) => {
-    const cb = "jusoCb_" + Date.now() + Math.floor(Math.random()*1000);
+    const cb = "jusoCb_" + Date.now() + Math.floor(Math.random() * 1e6);
     const s = document.createElement("script");
-    window[cb] = data => { resolve(data); delete window[cb]; s.remove(); };
-    s.onerror = () => { reject(new Error("네트워크 오류")); delete window[cb]; s.remove(); };
+    const done = () => { delete window[cb]; s.remove(); };
+    window[cb] = data => { done(); resolve(typeof data === "string" ? JSON.parse(data) : data); };
+    s.onerror = () => { done(); reject(new Error("네트워크 오류")); };
     s.src = url + "&callback=" + cb;
     document.body.appendChild(s);
   });
 }
+async function call(path, params) {
+  const qs = Object.entries(params).map(([k, v]) => k + "=" + encodeURIComponent(v)).join("&");
+  const r = (await jsonp(API + path + "?" + qs + "&resultType=json")).results;
+  if (r.common.errorCode !== "0") throw new Error(r.common.errorMessage);
+  return r;
+}
 
+// ===== 주소 검색 =====
 async function search(keyword, page) {
   curKeyword = keyword; curPage = page;
-  document.getElementById("msg").textContent = "검색 중…";
-  const url = API + "addrLinkApiJsonp.do"
-    + "?confmKey=" + encodeURIComponent(CONFM_KEY)
-    + "&currentPage=" + page
-    + "&countPerPage=" + PER_PAGE
-    + "&keyword=" + encodeURIComponent(keyword)
-    + "&resultType=json"
-    + "&hstryYn=N&firstSort=road&addInfoYn=Y";
+  setMsg("검색 중…");
   try {
-    let data = await jsonp(url);
-    if (typeof data === "string") data = JSON.parse(data);
-    render(data.results);
-  } catch (e) {
-    document.getElementById("msg").textContent = "오류: " + e.message;
-  }
+    const r = await call("addrLinkApiJsonp.do", {
+      confmKey: CONFM_KEY, currentPage: page, countPerPage: PER_PAGE, keyword,
+      hstryYn: "N", firstSort: "road", addInfoYn: "Y"
+    });
+    render(r);
+  } catch (e) { setMsg("오류: " + e.message, true); }
 }
+function setMsg(t, err) { const m = $("msg"); m.textContent = t; m.className = err ? "err" : ""; }
 
 function render(r) {
-  const msg = document.getElementById("msg"), list = document.getElementById("list"), pager = document.getElementById("pager");
+  const list = $("list"), pager = $("pager");
   list.innerHTML = ""; pager.innerHTML = "";
-  if (r.common.errorCode !== "0") { msg.textContent = "오류: " + r.common.errorMessage; return; }
   const total = Number(r.common.totalCount);
-  msg.textContent = `총 ${total.toLocaleString()}건`;
+  setMsg(total ? `검색 결과 ${total.toLocaleString()}건` : "검색 결과가 없습니다. 주소를 다시 확인해 주세요.");
+
   (r.juso || []).forEach(j => {
-    const hdong = j.hemdNm || "(행정동 정보 없음)";
-    const div = document.createElement("div");
-    div.className = "item";
-    div.innerHTML = `
-      <div class="road">${esc(j.roadAddr)}</div>
-      <div class="jibun"><span class="tag">지번</span>${esc(j.jibunAddr)} <span class="tag">우편</span>${esc(j.zipNo)}</div>
-      <div class="hdong">
-        <span class="tag">행정동</span><b>${esc(j.siNm)} ${esc(j.sggNm)} ${esc(hdong)}</b>
-        <span class="tag" style="margin-left:8px">법정동</span>${esc(j.emdNm)} ${esc(j.liNm)}
-        <button class="copy" type="button">복사</button>
-        <button class="detail-btn" type="button">동·호 보기</button>
+    const hdong = j.hemdNm || "";
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <div class="top">
+        <div class="addr">
+          <div class="road">${esc(j.roadAddr)}</div>
+          <div class="meta">
+            <b>지번</b>${esc(j.jibunAddr)}<i>|</i><b>우편</b>${esc(j.zipNo)}<i>|</i><b>법정동</b>${esc(j.emdNm)} ${esc(j.liNm)}
+          </div>
+        </div>
+        <div class="hdong">
+          <small>관할 행정동</small>
+          <strong>${esc(hdong || "정보 없음")}</strong>
+          <em>${esc(j.siNm)} ${esc(j.sggNm)}</em>
+        </div>
       </div>
-      <div class="detail"></div>`;
-    div.querySelector(".copy").onclick = () =>
-      navigator.clipboard.writeText(`${j.roadAddr}\n관할: ${j.siNm} ${j.sggNm} ${hdong}`);
-    div.querySelector(".detail-btn").onclick = () => loadDongs(j, div.querySelector(".detail"), hdong);
-    list.appendChild(div);
+      <div class="actions">
+        <button type="button" class="btn sm copy-btn">주소 + 행정동 복사</button>
+        <button type="button" class="btn sm ghost detail-btn">상세주소(동·층·호) 보기 ▾</button>
+      </div>
+      <div class="detail" hidden>
+        <div class="selects">
+          <div><label>동</label><select class="s-dong" disabled><option>불러오는 중…</option></select></div>
+          <div><label>층</label><select class="s-floor" disabled><option>층 선택</option></select></div>
+          <div><label>호</label><select class="s-ho" disabled><option>호 선택</option></select></div>
+        </div>
+        <div class="full" hidden><span></span><button type="button" class="btn sm full-copy">복사</button></div>
+        <div class="note"></div>
+      </div>`;
+    const juris = `${j.siNm} ${j.sggNm} ${hdong}`.trim();
+    card.querySelector(".copy-btn").onclick = () => copy(`${j.roadAddr}\n관할: ${juris}`);
+    const btn = card.querySelector(".detail-btn"), box = card.querySelector(".detail");
+    btn.onclick = () => {
+      box.hidden = !box.hidden;
+      btn.textContent = box.hidden ? "상세주소(동·층·호) 보기 ▾" : "상세주소 접기 ▴";
+      if (!box.hidden && !box.dataset.loaded) { box.dataset.loaded = "1"; initDetail(j, box, juris); }
+    };
+    list.appendChild(card);
   });
+
   const pages = Math.ceil(total / PER_PAGE);
   if (pages > 1) {
-    if (curPage > 1) addBtn("◀ 이전", curPage - 1);
-    pager.append(` ${curPage} / ${pages} `);
-    if (curPage < pages) addBtn("다음 ▶", curPage + 1);
-  }
-  function addBtn(label, p) {
-    const b = document.createElement("button");
-    b.textContent = label; b.onclick = () => search(curKeyword, p);
-    pager.appendChild(b);
-  }
-}
-
-// ===== 상세주소(동·층·호) =====
-async function detailApi(j, searchType, dongNm) {
-  const url = API + "addrDetailApiJsonp.do"
-    + "?confmKey=" + encodeURIComponent(DETAIL_KEY)
-    + "&admCd=" + j.admCd + "&rnMgtSn=" + j.rnMgtSn + "&udrtYn=" + j.udrtYn
-    + "&buldMnnm=" + j.buldMnnm + "&buldSlno=" + j.buldSlno
-    + "&searchType=" + searchType
-    + (dongNm != null ? "&dongNm=" + encodeURIComponent(dongNm) : "")
-    + "&resultType=json";
-  let data = await jsonp(url);
-  if (typeof data === "string") data = JSON.parse(data);
-  const r = data.results;
-  if (r.common.errorCode !== "0") throw new Error(r.common.errorMessage);
-  return r.juso || [];
-}
-
-async function loadDongs(j, box, hdong) {
-  if (box.innerHTML) { box.innerHTML = ""; return; }   // 다시 누르면 접기
-  box.textContent = "동 목록 불러오는 중…";
-  try {
-    const dongs = [...new Set((await detailApi(j, "dong")).map(d => d.dongNm || ""))];
-    const named = dongs.filter(d => d);
-    if (named.length === 0) { box.innerHTML = '<div class="row hos"></div>'; return loadHos(j, box, "", hdong); }
-    box.innerHTML = '<div class="row"><span class="tag">동</span><span class="dongs"></span></div><div class="row hos"></div>';
-    const wrap = box.querySelector(".dongs");
-    named.forEach(d => {
+    const add = (label, p) => {
       const b = document.createElement("button");
-      b.type = "button"; b.className = "chip"; b.textContent = d;
-      b.onclick = () => {
-        wrap.querySelectorAll(".chip").forEach(c => c.classList.remove("on"));
-        b.classList.add("on");
-        loadHos(j, box, d, hdong);
-      };
-      wrap.appendChild(b);
-    });
-  } catch (e) { box.textContent = "상세주소 오류: " + e.message; }
+      b.className = "btn sm ghost"; b.textContent = label;
+      b.onclick = () => { search(curKeyword, p); window.scrollTo({ top: 0, behavior: "smooth" }); };
+      pager.appendChild(b);
+    };
+    if (curPage > 1) add("◀ 이전", curPage - 1);
+    pager.append(`${curPage} / ${pages}`);
+    if (curPage < pages) add("다음 ▶", curPage + 1);
+  }
 }
 
-async function loadHos(j, box, dongNm, hdong) {
-  const out = box.querySelector(".hos");
-  out.textContent = "호 목록 불러오는 중…";
+// ===== 상세주소 (동 → 층 → 호 드롭다운) =====
+function detailParams(j, searchType, extra = {}) {
+  return Object.assign({
+    confmKey: DETAIL_KEY, admCd: j.admCd, rnMgtSn: j.rnMgtSn, udrtYn: j.udrtYn,
+    buldMnnm: j.buldMnnm, buldSlno: j.buldSlno, searchType
+  }, extra);
+}
+function fill(sel, placeholder, items) {
+  sel.innerHTML = `<option value="">${esc(placeholder)}</option>` +
+    items.map(([v, label]) => `<option value="${esc(v)}">${esc(label)}</option>`).join("");
+  sel.disabled = items.length === 0;
+}
+
+async function initDetail(j, box, juris) {
+  const sDong = box.querySelector(".s-dong"), sFloor = box.querySelector(".s-floor"), sHo = box.querySelector(".s-ho");
+  const full = box.querySelector(".full"), fullText = full.querySelector("span"), note = box.querySelector(".note");
+  let rows = [];
+
+  const showFull = () => {
+    const dong = sDong.value === "__none__" ? "" : sDong.value, ho = sHo.value;
+    if (!ho) { full.hidden = true; return; }
+    const detail = [dong, ho].filter(Boolean).join(" ");
+    const addr = `${j.roadAddrPart1}, ${detail}${j.roadAddrPart2 ? " " + j.roadAddrPart2 : ""}`;
+    fullText.textContent = addr;
+    full.hidden = false;
+    full.querySelector(".full-copy").onclick = () => copy(`${addr}\n관할: ${juris}`);
+  };
+
+  const fillHo = () => {
+    const hasFloors = !sFloor.disabled, f = sFloor.value;
+    if (hasFloors && !f) { fill(sHo, "층을 먼저 선택하세요", []); full.hidden = true; return; }
+    const hos = rows.filter(r => r.hoNm && (!hasFloors || (r.floorNm || "") === f));
+    fill(sHo, hos.length ? "호를 선택하세요" : "호 정보 없음", hos.map(r => [r.hoNm, r.hoNm]));
+    full.hidden = true;
+  };
+
+  const loadFloors = async dong => {
+    fill(sFloor, "불러오는 중…", []); fill(sHo, "호 선택", []); full.hidden = true; note.textContent = "";
+    try {
+      rows = (await call("addrDetailApiJsonp.do", detailParams(j, "floorho", { dongNm: dong }))).juso || [];
+      const floors = [...new Set(rows.map(r => r.floorNm || ""))].filter(Boolean);
+      if (floors.length) {
+        fill(sFloor, "층을 선택하세요", floors.map(f => [f, f]));
+        fill(sHo, "층을 먼저 선택하세요", []);
+      } else {
+        fill(sFloor, "층 정보 없음", []);
+        fillHo();
+      }
+      if (!rows.some(r => r.hoNm)) note.textContent = "이 건물은 등록된 호 정보가 없습니다.";
+    } catch (e) { fill(sFloor, "오류", []); note.textContent = "상세주소 오류: " + e.message; }
+  };
+
   try {
-    const rows = await detailApi(j, "floorho", dongNm);
-    const hos = rows.filter(r => r.hoNm);
-    if (hos.length === 0) { out.textContent = "등록된 호 정보가 없습니다."; return; }
-    out.innerHTML = '<span class="tag">호</span> <span style="color:#666;font-size:12px">누르면 전체 주소가 복사됩니다</span><div class="hochips"></div>';
-    const wrap = out.querySelector(".hochips");
-    hos.forEach(r => {
-      const b = document.createElement("button");
-      b.type = "button"; b.className = "chip";
-      b.innerHTML = (r.floorNm ? `<span class="floor">${esc(r.floorNm)}</span>` : "") + esc(r.hoNm);
-      const detail = [dongNm, r.hoNm].filter(Boolean).join(" ");
-      b.onclick = () => {
-        navigator.clipboard.writeText(`${j.roadAddrPart1}, ${detail}${j.roadAddrPart2 ? " " + j.roadAddrPart2 : ""}\n관할: ${j.siNm} ${j.sggNm} ${hdong}`);
-        b.classList.add("on"); setTimeout(() => b.classList.remove("on"), 600);
-      };
-      wrap.appendChild(b);
-    });
-  } catch (e) { out.textContent = "상세주소 오류: " + e.message; }
+    const dongs = [...new Set(((await call("addrDetailApiJsonp.do", detailParams(j, "dong"))).juso || []).map(d => d.dongNm || ""))];
+    const named = dongs.filter(Boolean);
+    if (named.length === 0) {
+      sDong.innerHTML = `<option value="">"동" 표기 없음</option>`; sDong.disabled = true;
+      loadFloors("");
+    } else {
+      fill(sDong, "동을 선택하세요", named.map(d => [d, d]));
+      if (dongs.includes("")) sDong.insertAdjacentHTML("beforeend", `<option value="__none__">"동" 표기 없음</option>`);
+      if (named.length === 1 && !dongs.includes("")) { sDong.value = named[0]; loadFloors(named[0]); }
+      else { fill(sFloor, "동을 먼저 선택하세요", []); }
+    }
+  } catch (e) {
+    sDong.innerHTML = `<option>오류</option>`; sDong.disabled = true;
+    note.textContent = "상세주소 오류: " + e.message;
+  }
+
+  sDong.onchange = () => {
+    const v = sDong.value === "__none__" ? "" : sDong.value;
+    if (sDong.value === "") { fill(sFloor, "동을 먼저 선택하세요", []); fill(sHo, "호 선택", []); full.hidden = true; return; }
+    loadFloors(v);
+  };
+  sFloor.onchange = fillHo;
+  sHo.onchange = showFull;
 }
 
-document.getElementById("f").onsubmit = e => {
+$("f").onsubmit = e => {
   e.preventDefault();
-  const q = document.getElementById("q").value.trim();
-  if (q.length < 2) { document.getElementById("msg").textContent = "2글자 이상 입력하세요."; return; }
+  const q = $("q").value.trim();
+  if (q.length < 2) { setMsg("2글자 이상 입력하세요.", true); return; }
   search(q, 1);
 };
 </script>

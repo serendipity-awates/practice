@@ -293,11 +293,14 @@ let kakaoReady = null;
 function loadKakao() {
   if (kakaoReady) return kakaoReady;
   kakaoReady = new Promise((resolve, reject) => {
-    if (!KAKAO_KEY || KAKAO_KEY.startsWith("5aa235fbe2851903239d344dddd72671")) return reject(new Error("no key"));
+    if (!/^[0-9a-f]{32}$/i.test(KAKAO_KEY)) return reject(new Error("카카오 키 형식이 올바르지 않음"));
     const s = document.createElement("script");
     s.src = "https://dapi.kakao.com/v2/maps/sdk.js?autoload=false&libraries=services&appkey=" + encodeURIComponent(KAKAO_KEY);
-    s.onload = () => kakao.maps.load(() => resolve(new kakao.maps.services.Places()));
-    s.onerror = () => reject(new Error("load fail"));
+    s.onload = () => {
+      if (!window.kakao || !kakao.maps) return reject(new Error("카카오 SDK 로드 실패 (도메인 등록·카카오맵 사용 설정 확인)"));
+      kakao.maps.load(() => resolve(new kakao.maps.services.Places()));
+    };
+    s.onerror = () => reject(new Error("카카오 SDK 로드 실패 (도메인 등록·카카오맵 사용 설정 확인)"));
     document.head.appendChild(s);
   });
   return kakaoReady;
@@ -310,6 +313,7 @@ function findTel(j, hdong) {
   if (telCache[key]) return telCache[key];
   return telCache[key] = loadKakao().then(places => new Promise(resolve => {
     places.keywordSearch(`${j.siNm} ${j.sggNm} ${hdong} 주민센터`, (data, status) => {
+      if (status === kakao.maps.services.Status.ERROR) console.warn("[주민센터 전화] 카카오 검색 오류 — 도메인 등록/카카오맵 사용 설정 확인");
       if (status !== kakao.maps.services.Status.OK) return resolve(null);
       const target = norm(hdong);
       const hit = data.find(p => p.phone && norm(p.place_name).startsWith(target) &&
@@ -331,7 +335,12 @@ async function showTel(el, j, hdong) {
       el.href = "https://map.kakao.com/?q=" + encodeURIComponent(`${j.sggNm} ${hdong} 주민센터`);
       el.target = "_blank";
     }
-  } catch { /* 키가 없거나 로드 실패 → 표시 안 함 */ }
+  } catch (e) {
+    console.warn("[주민센터 전화]", e.message);
+    el.textContent = "전화번호 찾기 ↗"; el.classList.add("muted");
+    el.href = "https://map.kakao.com/?q=" + encodeURIComponent(`${j.sggNm} ${hdong} 주민센터`);
+    el.target = "_blank"; el.title = e.message;
+  }
 }
 
 // ===== 상세주소 (동 → 층 → 호 드롭다운) =====

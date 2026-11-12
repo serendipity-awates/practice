@@ -66,7 +66,7 @@
   .center b { font-weight: 700; }
   .center a { color: var(--accent); font-weight: 700; text-decoration: none; margin-left: 6px; white-space: nowrap; }
   .center:empty { display: none; }
-  .meta { margin-top: 10px; color: var(--sub); font-size: 14px; font-weight: 500; line-height: 1.6; }
+  .meta { margin-top: 8px; color: var(--sub); font-size: 16px; font-weight: 500; line-height: 1.6; }
   .meta b { color: var(--ink); font-weight: 700; margin-right: 4px; }
   .meta i { font-style: normal; margin: 0 8px; color: var(--line); }
 
@@ -90,6 +90,7 @@
   .tel-copy { padding: 3px 8px; font-size: 11px; font-weight: 500; border-radius: 6px;
               background: transparent; color: var(--sub); border: 1px solid var(--line); }
   .tel-copy:hover { background: #fff; color: var(--ink); }
+  .center .tel-copy { margin-left: 6px; vertical-align: 1px; }
 
   .actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
 
@@ -219,10 +220,10 @@ function render(r) {
         <div class="addr">
           <div class="road"><span class="lbl">도로명</span><span>${esc(j.roadAddr)}</span></div>
           <div class="road"><span class="lbl">지번</span><span>${esc(j.jibunAddr)}</span></div>
-          <div class="center"></div>
           <div class="meta">
             <b>우편</b>${esc(j.zipNo)}<i>|</i><b>법정동</b>${esc(j.emdNm)} ${esc(j.liNm)}
           </div>
+          <div class="center"></div>
         </div>
         <div class="hdong">
           <small>관할 행정동</small>
@@ -298,7 +299,9 @@ async function showCenter(el, j, hdong) {
   if (!c) return;
   const [name, addr] = c;
   el.innerHTML = `<span class="lbl">주민센터</span><span><b>${esc(name)}</b> · ${esc(addr)}` +
-    `<a href="https://map.kakao.com/?q=${encodeURIComponent(addr)}" target="_blank" rel="noopener">지도 ↗</a></span>`;
+    `<a href="https://map.kakao.com/?q=${encodeURIComponent(addr)}" target="_blank" rel="noopener">지도 ↗</a>` +
+    `<button type="button" class="btn tel-copy">주소 복사</button></span>`;
+  el.querySelector(".tel-copy").onclick = () => copy(addr);
 }
 
 // ===== 주민센터 전화번호 (카카오 장소 검색) =====

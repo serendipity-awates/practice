@@ -83,11 +83,13 @@
   .tel.muted { color: var(--sub); border-color: var(--line); font-size: 13px; font-weight: 500; }
   .tel:empty { display: none; }
   .tel-head { display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
-  .tel-lbl { font-size: 12px; font-weight: 700; color: var(--accent-dark); }
+  .tel-lbl { font-size: 15px; font-weight: 900; color: var(--accent-dark); }
   .tel-lbl[hidden], .tel-copy[hidden] { display: none; }
   .telrow { display: flex; justify-content: center; align-items: center; gap: 6px; flex-wrap: wrap; }
   .telrow .tel { margin-top: 4px; }
-  .tel-copy { padding: 4px 9px; font-size: 11px; font-weight: 700; border-radius: 8px; }
+  .tel-copy { padding: 3px 8px; font-size: 11px; font-weight: 500; border-radius: 6px;
+              background: transparent; color: var(--sub); border: 1px solid var(--line); }
+  .tel-copy:hover { background: #fff; color: var(--ink); }
 
   .actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
 

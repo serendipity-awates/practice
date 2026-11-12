@@ -86,6 +86,10 @@
   .tel { display: inline-block; margin-top: 8px; padding: 5px 12px; border-radius: 999px; background: #fff;
          color: var(--accent-dark); font-size: 15px; font-weight: 700; text-decoration: none; border: 1px solid #f0c8a6; }
   .tel:hover { background: var(--accent); color: #fff; }
+  .rel { margin-top: 4px; padding-left: 64px; font-size: 15px; color: var(--sub); line-height: 1.5; word-break: keep-all; }
+  .rel b { color: var(--ink); font-weight: 700; margin-right: 6px; }
+  .hdong .tel-src { display: block; margin-top: 6px; font-size: 11px; font-weight: 500; color: var(--sub); font-style: normal; }
+  .hdong .tel-src[hidden] { display: none; }
   .tel.muted { color: var(--sub); border-color: var(--line); font-size: 13px; font-weight: 500; }
   .tel:empty { display: none; }
   .tel-head { display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
@@ -145,7 +149,9 @@
 
     .road { font-size: 17px; gap: 8px; }
     .road .lbl, .center .lbl { width: 46px; font-size: 12px; }
-    .meta { padding-left: 54px; font-size: 15px; }
+    .meta, .rel { padding-left: 54px; }
+    .meta { font-size: 15px; }
+    .rel { font-size: 14px; }
     .center { font-size: 14px; gap: 8px; }
     .center-actions .mini { flex: 1; justify-content: center; }
 
@@ -243,6 +249,7 @@ function render(r) {
         <div class="addr">
           <div class="road"><span class="lbl">도로명</span><span>${esc(j.roadAddr)}</span></div>
           <div class="road"><span class="lbl">지번</span><span>${esc(j.jibunAddr)}</span></div>
+          ${j.relJibun ? `<div class="rel"><b>관련지번</b>${esc(j.relJibun)}</div>` : ""}
           <div class="meta">
             <b>우편</b>${esc(j.zipNo)}<i>|</i><b>법정동</b>${esc(j.emdNm)} ${esc(j.liNm)}
           </div>
@@ -257,6 +264,7 @@ function render(r) {
             <button type="button" class="btn tel-copy" hidden>전화번호 복사</button>
           </div>
           <div class="telrow"><a class="tel"></a></div>
+          <small class="tel-src" hidden>카카오맵 기준 · 실제와 다를 수 있어요</small>
         </div>
       </div>
       <div class="actions">
@@ -370,6 +378,7 @@ async function showTel(el, j, hdong, lbl, copyBtn) {
     if (p) {
       el.textContent = "☎ " + p.phone;
       lbl.hidden = false; copyBtn.hidden = false;
+      el.closest(".hdong").querySelector(".tel-src").hidden = false;
       copyBtn.onclick = () => copy(p.phone);
       el.href = "tel:" + p.phone.replace(/[^0-9]/g, "");
       el.title = p.place_name + " (카카오맵 기준, 참고용)";

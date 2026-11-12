@@ -64,7 +64,12 @@
   .center .lbl { flex-shrink: 0; width: 54px; text-align: center; font-size: 12px; font-weight: 700; padding: 3px 0;
                  border-radius: 8px; background: var(--accent-soft); color: var(--accent-dark); }
   .center b { font-weight: 700; }
-  .center a { color: var(--accent); font-weight: 700; text-decoration: none; margin-left: 6px; white-space: nowrap; }
+  .center-actions { display: flex; gap: 8px; margin-top: 8px; }
+  .mini { display: inline-flex; align-items: center; padding: 6px 12px; font: inherit; font-size: 13px; font-weight: 700;
+          border-radius: 8px; border: 1px solid var(--line); background: #fff; color: var(--ink);
+          text-decoration: none; cursor: pointer; white-space: nowrap; }
+  .mini:hover { border-color: var(--accent); color: var(--accent); }
+  .mini.map { color: var(--accent-dark); }
   .center:empty { display: none; }
   .meta { margin-top: 8px; color: var(--sub); font-size: 16px; font-weight: 500; line-height: 1.6; }
   .meta b { color: var(--ink); font-weight: 700; margin-right: 4px; }
@@ -90,7 +95,6 @@
   .tel-copy { padding: 3px 8px; font-size: 11px; font-weight: 500; border-radius: 6px;
               background: transparent; color: var(--sub); border: 1px solid var(--line); }
   .tel-copy:hover { background: #fff; color: var(--ink); }
-  .center .tel-copy { margin-left: 6px; vertical-align: 1px; }
 
   .actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
 
@@ -298,10 +302,11 @@ async function showCenter(el, j, hdong) {
   const c = centers[`${sido}|${sgg}|${norm(hdong).replace(/[,ㆍ]/g, "")}`];
   if (!c) return;
   const [name, addr] = c;
-  el.innerHTML = `<span class="lbl">주민센터</span><span><b>${esc(name)}</b> · ${esc(addr)}` +
-    `<a href="https://map.kakao.com/?q=${encodeURIComponent(addr)}" target="_blank" rel="noopener">지도 ↗</a>` +
-    `<button type="button" class="btn tel-copy">주소 복사</button></span>`;
-  el.querySelector(".tel-copy").onclick = () => copy(addr);
+  el.innerHTML = `<span class="lbl">주민센터</span><div><div><b>${esc(name)}</b> · ${esc(addr)}</div>` +
+    `<div class="center-actions">` +
+    `<a class="mini map" href="https://map.kakao.com/?q=${encodeURIComponent(addr)}" target="_blank" rel="noopener">지도 보기 ↗</a>` +
+    `<button type="button" class="mini addr-copy">주소 복사</button></div></div>`;
+  el.querySelector(".addr-copy").onclick = () => copy(addr);
 }
 
 // ===== 주민센터 전화번호 (카카오 장소 검색) =====

@@ -148,7 +148,7 @@ const CONFM_KEY = "U01TX0FVVEgyMDI2MTExMDIxMjUyODEyMTA4OTQ=";
 // 상세주소 검색 API 승인키
 const DETAIL_KEY = "U01TX0FVVEgyMDI2MTExMDIyMzMyMDEyMTA5MDI=";
 // ▼ 카카오 JavaScript 키 (주민센터 전화번호 조회용, developers.kakao.com)
-const KAKAO_KEY = "여기에_카카오_JavaScript_키";
+const KAKAO_KEY = "5aa235fbe2851903239d344dddd72671에_카카오_JavaScript_키";
 const API = "https://business.juso.go.kr/addrlink/";
 const PER_PAGE = 20;
 let curKeyword = "", curPage = 1;
@@ -295,7 +295,7 @@ let kakaoReady = null;
 function loadKakao() {
   if (kakaoReady) return kakaoReady;
   kakaoReady = new Promise((resolve, reject) => {
-    if (!KAKAO_KEY || KAKAO_KEY.startsWith("여기에")) return reject(new Error("no key"));
+    if (!KAKAO_KEY || KAKAO_KEY.startsWith("5aa235fbe2851903239d344dddd72671")) return reject(new Error("no key"));
     const s = document.createElement("script");
     s.src = "https://dapi.kakao.com/v2/maps/sdk.js?autoload=false&libraries=services&appkey=" + encodeURIComponent(KAKAO_KEY);
     s.onload = () => kakao.maps.load(() => resolve(new kakao.maps.services.Places()));

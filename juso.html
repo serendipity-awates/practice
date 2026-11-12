@@ -16,7 +16,13 @@
   .hdong { margin-top:8px; font-size:15px; }
   .hdong b { color:#dc2626; font-size:17px; }
   .tag { display:inline-block; background:#eef2ff; color:#3730a3; border-radius:4px; padding:1px 6px; font-size:12px; margin-right:6px; }
-  .copy { margin-left:8px; font-size:12px; padding:3px 8px; background:#e5e7eb; color:#111; }
+  .copy, .detail-btn { margin-left:8px; font-size:12px; padding:3px 8px; background:#e5e7eb; color:#111; }
+  .detail { margin-top:10px; padding-top:10px; border-top:1px dashed #ddd; font-size:14px; }
+  .detail:empty { display:none; }
+  .detail .row { margin:6px 0; }
+  .chip { display:inline-block; margin:3px; padding:4px 10px; font-size:13px; border:1px solid #d1d5db; border-radius:14px; background:#fff; color:#111; cursor:pointer; }
+  .chip.on { background:#2563eb; color:#fff; border-color:#2563eb; }
+  .floor { color:#666; font-size:12px; margin-right:4px; }
   #msg { color:#666; margin:8px 0; }
   #pager button { background:#e5e7eb; color:#111; margin-right:4px; }
 </style>
@@ -32,8 +38,11 @@
 <div id="pager"></div>
 
 <script>
-// ▼ business.juso.go.kr 에서 발급받은 "도로명주소 검색 API" 승인키를 넣으세요
+// 도로명주소 검색 API 승인키 (business.juso.go.kr)
 const CONFM_KEY = "U01TX0FVVEgyMDI2MTExMDIxMjUyODEyMTA4OTQ=";
+// ▼ "상세주소 검색 API" 승인키를 아래 따옴표 안에 넣으세요 (검색 API 키와 다른 키)
+const DETAIL_KEY = "여기에_상세주소_승인키";
+const API = "https://business.juso.go.kr/addrlink/";
 const PER_PAGE = 20;
 let curKeyword = "", curPage = 1;
 
@@ -54,7 +63,7 @@ function jsonp(url) {
 async function search(keyword, page) {
   curKeyword = keyword; curPage = page;
   document.getElementById("msg").textContent = "검색 중…";
-  const url = "https://business.juso.go.kr/addrlink/addrLinkApiJsonp.do"
+  const url = API + "addrLinkApiJsonp.do"
     + "?confmKey=" + encodeURIComponent(CONFM_KEY)
     + "&currentPage=" + page
     + "&countPerPage=" + PER_PAGE
@@ -87,9 +96,12 @@ function render(r) {
         <span class="tag">행정동</span><b>${esc(j.siNm)} ${esc(j.sggNm)} ${esc(hdong)}</b>
         <span class="tag" style="margin-left:8px">법정동</span>${esc(j.emdNm)} ${esc(j.liNm)}
         <button class="copy" type="button">복사</button>
-      </div>`;
+        <button class="detail-btn" type="button">동·호 보기</button>
+      </div>
+      <div class="detail"></div>`;
     div.querySelector(".copy").onclick = () =>
       navigator.clipboard.writeText(`${j.roadAddr}\n관할: ${j.siNm} ${j.sggNm} ${hdong}`);
+    div.querySelector(".detail-btn").onclick = () => loadDongs(j, div.querySelector(".detail"), hdong);
     list.appendChild(div);
   });
   const pages = Math.ceil(total / PER_PAGE);
@@ -103,6 +115,67 @@ function render(r) {
     b.textContent = label; b.onclick = () => search(curKeyword, p);
     pager.appendChild(b);
   }
+}
+
+// ===== 상세주소(동·층·호) =====
+async function detailApi(j, searchType, dongNm) {
+  const url = API + "addrDetailApiJsonp.do"
+    + "?confmKey=" + encodeURIComponent(DETAIL_KEY)
+    + "&admCd=" + j.admCd + "&rnMgtSn=" + j.rnMgtSn + "&udrtYn=" + j.udrtYn
+    + "&buldMnnm=" + j.buldMnnm + "&buldSlno=" + j.buldSlno
+    + "&searchType=" + searchType
+    + (dongNm != null ? "&dongNm=" + encodeURIComponent(dongNm) : "")
+    + "&resultType=json";
+  let data = await jsonp(url);
+  if (typeof data === "string") data = JSON.parse(data);
+  const r = data.results;
+  if (r.common.errorCode !== "0") throw new Error(r.common.errorMessage);
+  return r.juso || [];
+}
+
+async function loadDongs(j, box, hdong) {
+  if (box.innerHTML) { box.innerHTML = ""; return; }   // 다시 누르면 접기
+  box.textContent = "동 목록 불러오는 중…";
+  try {
+    const dongs = [...new Set((await detailApi(j, "dong")).map(d => d.dongNm || ""))];
+    const named = dongs.filter(d => d);
+    if (named.length === 0) { box.innerHTML = '<div class="row hos"></div>'; return loadHos(j, box, "", hdong); }
+    box.innerHTML = '<div class="row"><span class="tag">동</span><span class="dongs"></span></div><div class="row hos"></div>';
+    const wrap = box.querySelector(".dongs");
+    named.forEach(d => {
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "chip"; b.textContent = d;
+      b.onclick = () => {
+        wrap.querySelectorAll(".chip").forEach(c => c.classList.remove("on"));
+        b.classList.add("on");
+        loadHos(j, box, d, hdong);
+      };
+      wrap.appendChild(b);
+    });
+  } catch (e) { box.textContent = "상세주소 오류: " + e.message; }
+}
+
+async function loadHos(j, box, dongNm, hdong) {
+  const out = box.querySelector(".hos");
+  out.textContent = "호 목록 불러오는 중…";
+  try {
+    const rows = await detailApi(j, "floorho", dongNm);
+    const hos = rows.filter(r => r.hoNm);
+    if (hos.length === 0) { out.textContent = "등록된 호 정보가 없습니다."; return; }
+    out.innerHTML = '<span class="tag">호</span> <span style="color:#666;font-size:12px">누르면 전체 주소가 복사됩니다</span><div class="hochips"></div>';
+    const wrap = out.querySelector(".hochips");
+    hos.forEach(r => {
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "chip";
+      b.innerHTML = (r.floorNm ? `<span class="floor">${esc(r.floorNm)}</span>` : "") + esc(r.hoNm);
+      const detail = [dongNm, r.hoNm].filter(Boolean).join(" ");
+      b.onclick = () => {
+        navigator.clipboard.writeText(`${j.roadAddrPart1}, ${detail}${j.roadAddrPart2 ? " " + j.roadAddrPart2 : ""}\n관할: ${j.siNm} ${j.sggNm} ${hdong}`);
+        b.classList.add("on"); setTimeout(() => b.classList.remove("on"), 600);
+      };
+      wrap.appendChild(b);
+    });
+  } catch (e) { out.textContent = "상세주소 오류: " + e.message; }
 }
 
 document.getElementById("f").onsubmit = e => {

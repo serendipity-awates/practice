@@ -224,6 +224,8 @@ function render(r) {
       </div>
       <div class="actions">
         <button type="button" class="btn sm copy-btn">주소 + 행정동 복사</button>
+        <button type="button" class="btn sm ghost copy-road">도로명주소 복사</button>
+        <button type="button" class="btn sm ghost copy-jibun">지번주소 복사</button>
         <button type="button" class="btn sm ghost detail-btn" hidden>상세주소(동·층·호) 보기 ▾</button>
         <span class="no-ho loading">상세주소 확인 중…</span>
       </div>
@@ -240,6 +242,8 @@ function render(r) {
     if (hdong) showTel(card.querySelector(".tel"), j, hdong);
     if (hdong) showCenter(card.querySelector(".center"), j, hdong);
     card.querySelector(".copy-btn").onclick = () => copy(`${j.roadAddr}\n관할: ${juris}`);
+    card.querySelector(".copy-road").onclick = () => copy(j.roadAddr);
+    card.querySelector(".copy-jibun").onclick = () => copy(j.jibunAddr);
     const btn = card.querySelector(".detail-btn"), box = card.querySelector(".detail");
     const status = card.querySelector(".no-ho");
     probeDetail(j).then(pr => {

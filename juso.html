@@ -82,12 +82,12 @@
   .tel:hover { background: var(--accent); color: #fff; }
   .tel.muted { color: var(--sub); border-color: var(--line); font-size: 13px; font-weight: 500; }
   .tel:empty { display: none; }
-  .tel-lbl { display: block; margin-top: 10px; font-size: 12px; font-weight: 700; color: var(--accent-dark); }
+  .tel-head { display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+  .tel-lbl { font-size: 12px; font-weight: 700; color: var(--accent-dark); }
   .tel-lbl[hidden], .tel-copy[hidden] { display: none; }
   .telrow { display: flex; justify-content: center; align-items: center; gap: 6px; flex-wrap: wrap; }
   .telrow .tel { margin-top: 4px; }
-  .tel-lbl:not([hidden]) + .telrow .tel { margin-top: 4px; }
-  .tel-copy { margin-top: 4px; padding: 5px 9px; font-size: 11px; font-weight: 700; border-radius: 8px; }
+  .tel-copy { padding: 4px 9px; font-size: 11px; font-weight: 700; border-radius: 8px; }
 
   .actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
 
@@ -226,11 +226,11 @@ function render(r) {
           <small>관할 행정동</small>
           <strong>${esc(hdong || "정보 없음")}</strong>
           <em>${esc(j.siNm)} ${esc(j.sggNm)}</em>
-          <span class="tel-lbl" hidden>주민센터 대표전화</span>
-          <div class="telrow">
-            <a class="tel"></a>
+          <div class="tel-head">
+            <span class="tel-lbl" hidden>주민센터 대표전화</span>
             <button type="button" class="btn tel-copy" hidden>전화번호 복사</button>
           </div>
+          <div class="telrow"><a class="tel"></a></div>
         </div>
       </div>
       <div class="actions">

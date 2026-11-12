@@ -129,11 +129,28 @@
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
   @media (max-width: 640px) {
-    header h1 { font-size: 24px; }
-    .top { flex-direction: column; }
-    .hdong { width: 100%; }
+    .wrap { padding: 24px 12px 48px; }
+    header h1 { font-size: 23px; line-height: 1.35; word-break: keep-all; }
+    header p { font-size: 14px; word-break: keep-all; margin-bottom: 16px; }
+    #q { font-size: 17px; padding: 14px 16px; }
+    form .btn { padding: 0 18px; font-size: 17px; }
+
+    .card { padding: 16px 14px; border-radius: 16px; }
+    .top { flex-direction: column; gap: 14px; }
+    /* 휴대폰에서는 관할 행정동을 맨 위에 */
+    .hdong { order: -1; width: 100%; min-width: 0; padding: 14px 12px; }
+    .hdong strong { font-size: 28px; }
+
+    .road { font-size: 17px; gap: 8px; }
+    .road .lbl, .center .lbl { width: 46px; font-size: 12px; }
+    .meta { padding-left: 54px; font-size: 15px; }
+    .center { font-size: 14px; gap: 8px; }
+    .center-actions .mini { flex: 1; justify-content: center; }
+
+    .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .actions .btn { padding: 11px 8px; font-size: 14px; }
+    .actions .detail-btn, .actions .no-ho { grid-column: 1 / -1; text-align: center; }
     .selects { grid-template-columns: 1fr; }
-    form .btn { padding: 0 18px; }
   }
 </style>
 </head>

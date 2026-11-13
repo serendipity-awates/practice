@@ -163,10 +163,13 @@
 
   #pager { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 16px; color: var(--sub); }
   /* 지도로 찾기 */
-  .mapfind { margin: 10px 4px 0; padding: 0; border: 0; background: none; font: inherit; font-size: 14px; font-weight: 500;
-             color: var(--sub); cursor: pointer; }
-  .mapfind b { color: var(--accent); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
-  .mapfind:hover b { color: var(--accent-dark); }
+  .mapfind { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin: 12px 0 0; padding: 15px 20px;
+             border: 2px solid var(--accent); border-radius: 14px; background: #fff; font: inherit; font-size: 18px; font-weight: 700;
+             color: var(--accent-dark); cursor: pointer; transition: background .15s, color .15s; }
+  .mapfind .pin { font-size: 20px; }
+  .mapfind b { font-weight: 900; color: var(--accent); }
+  .mapfind:hover { background: var(--accent); color: #fff; }
+  .mapfind:hover b { color: #fff; }
   .mapmodal { position: fixed; inset: 0; z-index: 50; background: rgba(30, 20, 15, .55); display: flex; align-items: center; justify-content: center; padding: 16px; }
   .mapmodal[hidden] { display: none; }
   .mapbox { width: min(820px, 100%); max-height: calc(100vh - 32px); display: flex; flex-direction: column;
@@ -194,6 +197,7 @@
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
   @media (max-width: 640px) {
+    .mapfind { font-size: 16px; padding: 13px 14px; }
     .maphead span { display: none; }
     .maphead { justify-content: space-between; }
     .mapmodal { padding: 10px; }
@@ -251,7 +255,7 @@
     </div>
     <button class="btn">검색</button>
   </form>
-  <button type="button" class="mapfind" id="mapOpen">📍 주소를 모르면 <b>지도로 찾기</b></button>
+  <button type="button" class="mapfind" id="mapOpen"><span class="pin">📍</span> 주소를 모르면 <b>지도로 찾기</b></button>
 
   <div class="resbar">
     <div id="msg"></div>

@@ -65,10 +65,19 @@
   .btn.ghost:hover { background: #e8d7bf; }
   .btn.sm { padding: 8px 14px; font-size: 14px; }
 
-  .sort { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; margin: 14px 4px 0; font-size: 14px; color: var(--ink); }
-  .sort label { display: inline-flex; align-items: center; gap: 5px; font-weight: 700; cursor: pointer; }
-  .sort input { accent-color: var(--accent); width: 16px; height: 16px; margin: 0; cursor: pointer; }
-  .sort-help { font-size: 12px; font-weight: 500; color: var(--sub); word-break: keep-all; }
+  .resbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 16px; margin: 18px 4px 12px; }
+  .resbar #msg { margin: 0; }
+  .sort { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; font-size: 13px; color: var(--sub); }
+  .sort[hidden] { display: none; }
+  .sort label { display: inline-flex; align-items: center; gap: 4px; font-weight: 700; cursor: pointer; }
+  .sort label:has(input:checked) { color: var(--accent-dark); }
+  .sort input { accent-color: var(--accent); width: 14px; height: 14px; margin: 0; cursor: pointer; }
+  /* 정확히 일치한 주소 표시 */
+  .match { display: inline-block; margin-bottom: 10px; padding: 4px 10px; border-radius: 999px;
+           background: var(--accent); color: #fff; font-size: 12px; font-weight: 700; letter-spacing: -0.01em; }
+  .card.exact { border: 2px solid var(--accent); }
+  .similar-head { display: flex; align-items: center; gap: 10px; margin: 22px 4px 10px; font-size: 14px; font-weight: 700; color: var(--sub); }
+  .similar-head::after { content: ""; flex: 1; height: 1px; background: var(--line); }
   #msg { margin: 12px 4px 10px; color: var(--sub); font-size: 15px; }
   #msg.err { color: #b42318; font-weight: 700; }
 
@@ -156,6 +165,7 @@
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
   @media (max-width: 640px) {
+    .resbar { flex-direction: column; align-items: flex-start; }
     .wrap { padding: 24px 12px 48px; }
     header h1 { font-size: 23px; line-height: 1.35; word-break: keep-all; }
     header p { font-size: 14px; word-break: keep-all; margin-bottom: 16px; }
@@ -208,13 +218,14 @@
     <button class="btn">검색</button>
   </form>
 
-  <div class="sort" role="radiogroup" aria-label="정렬">
-    <label><input type="radio" name="sort" value="none" checked> 정확도순</label>
-    <label><input type="radio" name="sort" value="road"> 도로명 포함</label>
-    <label><input type="radio" name="sort" value="location"> 지번 포함</label>
-    <span class="sort-help">입력한 키워드가 선택한 항목에 포함되는 주소가 먼저 나오고, 도로명주소 순으로 정렬돼요.</span>
+  <div class="resbar">
+    <div id="msg"></div>
+    <div class="sort" role="radiogroup" aria-label="정렬" title="입력한 키워드가 선택한 항목에 포함되는 주소가 먼저 나오고, 도로명주소 순으로 정렬돼요." hidden>
+      <label><input type="radio" name="sort" value="none" checked> 정확도순</label>
+      <label><input type="radio" name="sort" value="road"> 도로명 포함</label>
+      <label><input type="radio" name="sort" value="location"> 지번 포함</label>
+    </div>
   </div>
-  <div id="msg"></div>
   <div id="list"></div>
   <div id="pager"></div>
 
@@ -289,13 +300,44 @@ async function search(keyword, page) {
 }
 function setMsg(t, err) { const m = $("msg"); m.textContent = t; m.className = err ? "err" : ""; }
 
+// 입력한 검색어가 이 결과의 도로명주소·지번주소·건물명과 정확히 같은지
+// (앞에 시·구 이름이 붙어 있어도 됨: "서울 중구 세종대로 110" → 세종대로 110 과 일치)
+function isExact(keyword, j) {
+  const k = String(keyword || "").replace(/\(.*?\)/g, "").replace(/\s/g, "");
+  if (!k) return false;
+  const no = (m, sl) => String(m) + (sl && String(sl) !== "0" ? "-" + sl : "");
+  const keys = [];
+  if (j.rn && j.buldMnnm) keys.push(j.rn + no(j.buldMnnm, j.buldSlno));
+  if (j.lnbrMnnm) {
+    const jb = (j.mtYn === "1" ? "산" : "") + no(j.lnbrMnnm, j.lnbrSlno);
+    if (j.emdNm) keys.push(j.emdNm + jb);
+    if (j.liNm) keys.push(j.liNm + jb);
+  }
+  if (j.bdNm) { const b = j.bdNm.replace(/\s/g, ""); if (k === b || k.endsWith(b) && b.length >= 3) return true; }
+  return keys.some(key => key && k.endsWith(key.replace(/\s/g, "")));
+}
+
 function render(r) {
   const list = $("list"), pager = $("pager");
   list.innerHTML = ""; pager.innerHTML = "";
   const total = Number(r.common.totalCount);
   setMsg(total ? `검색 결과 ${total.toLocaleString()}건` : "검색 결과가 없습니다. 주소를 다시 확인해 주세요.");
+  document.querySelector(".sort").hidden = !total;
 
-  (r.juso || []).forEach(j => {
+  // 입력한 주소와 정확히 일치하는 결과를 맨 앞에, 나머지는 '유사 결과'로 구분
+  const rows = (r.juso || []).map(j => ({ j, exact: isExact(curKeyword, j) }));
+  const exactN = rows.filter(x => x.exact).length;
+  const ordered = exactN ? [...rows.filter(x => x.exact), ...rows.filter(x => !x.exact)] : rows;
+  let similarShown = false;
+
+  ordered.forEach(({ j, exact }) => {
+    if (exactN && !exact && !similarShown) {
+      similarShown = true;
+      const h = document.createElement("div");
+      h.className = "similar-head";
+      h.textContent = `유사 결과 ${ordered.length - exactN}건`;
+      list.appendChild(h);
+    }
     // hemdNm 은 "서울특별시 영등포구 신길제1동"처럼 시·군·구까지 붙어서 오고,
     // 관할이 여러 곳이면 "…한강로동,서빙고동"처럼 쉼표로 이어져 와요 → 각각의 마지막 단어(행정동)만 사용
     const hdongs = [...new Set(String(j.hemdNm || "").split(",")
@@ -303,8 +345,8 @@ function render(r) {
     const hdong = hdongs.join(", ");
     const multi = hdongs.length > 1;
     const card = document.createElement("div");
-    card.className = "card";
-    card.innerHTML = `
+    card.className = "card" + (exactN && exact ? " exact" : "");
+    card.innerHTML = `${exactN && exact ? '<span class="match">✓ 주소 일치</span>' : ""}
       <div class="top">
         <div class="addr">
           <div class="road"><span class="lbl">도로명</span><span>${esc(j.roadAddr)}</span></div>
@@ -553,7 +595,7 @@ async function initDetail(j, box, juris) {
 // 제목을 누르면 처음 화면으로 (검색어·결과·정렬 초기화 후 검색창에 커서)
 document.querySelector("header h1 .home").onclick = e => {
   e.preventDefault();
-  $("q").value = ""; $("list").innerHTML = ""; $("pager").innerHTML = ""; setMsg("");
+  $("q").value = ""; $("list").innerHTML = ""; $("pager").innerHTML = ""; setMsg(""); document.querySelector(".sort").hidden = true;
   curKeyword = ""; curPage = 1;
   const def = document.querySelector('input[name="sort"][value="none"]'); if (def) def.checked = true;
   window.scrollTo({ top: 0, behavior: "smooth" });

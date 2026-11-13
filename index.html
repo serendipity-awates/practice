@@ -23,13 +23,13 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap">
 <style>
   :root {
-    --bg: #F7F0E2;
-    --card: #FFFDF6;
+    --bg: #F7F2E4;
+    --card: #FFFDF8;
     --line: #e6d6bf;
-    --ink: #2E211C;
+    --ink: #2f241b;
     --sub: #7a6553;
-    --accent: #741D35;
-    --accent-dark: #561326;
+    --accent: #6A1629;
+    --accent-dark: #4A0E1C;
     --accent-soft: #F6EED9;
     --chip: #f1e4d1;
   }
@@ -76,19 +76,14 @@
   .match { display: inline-block; margin-bottom: 10px; padding: 4px 10px; border-radius: 999px;
            background: var(--accent); color: #fff; font-size: 12px; font-weight: 700; letter-spacing: -0.01em; }
   .card.exact { border: 2px solid var(--accent); }
-  .card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px;
-               margin: 0 -22px 18px; padding: 12px 22px; background: var(--accent); color: #F7F0E2; }
-  .card-head .ch-dong { font-size: 14px; font-weight: 500; letter-spacing: -0.01em; }
-  .card-head .ch-dong b { font-size: 17px; font-weight: 900; color: #fff; margin-left: 4px; }
-  .card-head .match { margin: 0; background: #F7F0E2; color: var(--accent); }
   .similar-head { display: flex; align-items: center; gap: 10px; margin: 22px 4px 10px; font-size: 14px; font-weight: 700; color: var(--sub); }
   .similar-head::after { content: ""; flex: 1; height: 1px; background: var(--line); }
   #msg { margin: 12px 4px 10px; color: var(--sub); font-size: 15px; }
   #msg.err { color: #b42318; font-weight: 700; }
 
   .card {
-    background: var(--card); border: 1px solid var(--line); border-radius: 18px; overflow: hidden;
-    padding: 0 22px 20px; margin-bottom: 14px; box-shadow: 0 2px 0 rgba(120, 90, 50, .06);
+    background: var(--card); border: 1px solid var(--line); border-radius: 18px;
+    padding: 20px 22px; margin-bottom: 14px; box-shadow: 0 2px 0 rgba(120, 90, 50, .06);
   }
   .top { display: flex; gap: 18px; align-items: flex-start; }
   .addr { flex: 1; min-width: 0; }
@@ -180,8 +175,7 @@
     #q::placeholder { font-size: min(17px, calc((100vw - 133px) * 0.059)); font-weight: 500; letter-spacing: 0; }
     form .btn { padding: 0 18px; font-size: 17px; }
 
-    .card { padding: 0 14px 16px; border-radius: 16px; }
-    .card-head { margin: 0 -14px 14px; padding: 11px 14px; }
+    .card { padding: 16px 14px; border-radius: 16px; }
     .top { flex-direction: column; gap: 14px; }
     /* 휴대폰에서는 관할 행정동을 맨 위에 */
     .hdong { order: -1; width: 100%; min-width: 0; padding: 14px 12px; }
@@ -352,10 +346,7 @@ function render(r) {
     const multi = hdongs.length > 1;
     const card = document.createElement("div");
     card.className = "card" + (exactN && exact ? " exact" : "");
-    card.innerHTML = `<div class="card-head">
-        <span class="ch-dong">관할 행정동<b>${hdongs.length ? hdongs.map(esc).join(" · ") : "정보 없음"}</b></span>
-        ${exactN && exact ? '<span class="match">✓ 주소 일치</span>' : ""}
-      </div>
+    card.innerHTML = `${exactN && exact ? '<span class="match">✓ 주소 일치</span>' : ""}
       <div class="top">
         <div class="addr">
           <div class="road"><span class="lbl">도로명</span><span>${esc(j.roadAddr)}</span></div>

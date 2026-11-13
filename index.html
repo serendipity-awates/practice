@@ -357,8 +357,27 @@ async function search(keyword, page) {
       confmKey: CONFM_KEY, currentPage: page, countPerPage: PER_PAGE, keyword,
       hstryYn: "N", firstSort: (document.querySelector('input[name="sort"]:checked') || {}).value || "none", addInfoYn: "Y"
     });
+    // 결과가 없으면: 도로명주소 없는 땅의 지번일 수 있으니 카카오 주소 검색으로 위치·행정동 찾기
+    if (r.common.errorCode === "0" && !Number(r.common.totalCount) && !(mapFallback && mapFallback.keyword === keyword)) {
+      setMsg("도로명주소가 없는 지번인지 확인 중…");
+      const items = await jibunLookup(keyword);
+      if (curKeyword !== keyword) return;           // 그새 다른 검색을 했으면 무시
+      mapFallback = items.length ? { source: "jibun", keyword, items } : null;
+    }
     render(r);
   } catch (e) { setMsg("오류: " + e.message, true); }
+}
+// 지번(예: 원삼면 두창리 1684-2) → 카카오 주소 검색으로 행정동 찾기 (최대 5곳)
+async function jibunLookup(keyword) {
+  try {
+    await loadKakao();
+    const geo = new kakao.maps.services.Geocoder();
+    const res = await new Promise(ok => geo.addressSearch(keyword, (d, st) => ok(st === kakao.maps.services.Status.OK ? d : [])));
+    return res.filter(x => x.address && x.address.main_address_no && x.address.region_3depth_h_name).slice(0, 5).map(x => ({
+      si: x.address.region_1depth_name, sgg: x.address.region_2depth_name, dong: x.address.region_3depth_h_name,
+      bdong: x.address.region_3depth_name, jibun: x.address.address_name
+    }));
+  } catch (e) { console.warn("[지번 위치 찾기]", e.message); return []; }
 }
 function setMsg(t, err) { const m = $("msg"); m.textContent = t; m.className = err ? "err" : ""; }
 
@@ -385,16 +404,18 @@ function render(r) {
   let total = Number(r.common.totalCount), fromMap = false;
   // 지도에서 고른 곳이 건물 없는 땅이라 주소 검색에 안 나오면 → 지도 위치의 행정동으로 대신 보여주기
   const mf = mapFallback;
-  if (!total && mf && mf.keyword === curKeyword && mf.dong) {
-    r = { common: r.common, juso: [{
-      _noRoad: true, roadAddr: "", roadAddrPart1: "", roadAddrPart2: "", jibunAddr: mf.jibun, zipNo: "",
-      siNm: mf.si, sggNm: mf.sgg, emdNm: mf.bdong || "", liNm: "", hemdNm: `${mf.si} ${mf.sgg} ${mf.dong}`
-    }] };
-    total = 1; fromMap = true;
+  if (!total && mf && mf.keyword === curKeyword && mf.items.length) {
+    r = { common: r.common, juso: mf.items.map(it => ({
+      _noRoad: true, roadAddr: "", roadAddrPart1: "", roadAddrPart2: "", jibunAddr: it.jibun, zipNo: "",
+      siNm: it.si, sggNm: it.sgg, emdNm: it.bdong || "", liNm: "", hemdNm: `${it.si} ${it.sgg} ${it.dong}`
+    })) };
+    total = mf.items.length; fromMap = true;
   }
-  setMsg(fromMap ? "지도에서 고른 위치예요 · 도로명주소가 없는 곳이라 지번 기준으로 보여드려요"
+  setMsg(fromMap ? (mf.source === "map"
+           ? "지도에서 고른 위치예요 · 도로명주소가 없는 곳이라 지번 기준으로 보여드려요"
+           : `도로명주소가 없는 지번이에요 · 지번 위치 기준으로 보여드려요${total > 1 ? ` (${total}곳)` : ""}`)
        : total ? `검색 결과 ${total.toLocaleString()}건`
-       : "검색 결과가 없습니다. 건물이 없는 땅(지번)은 주소 검색에 나오지 않아요. 아래 [지도로 찾기]로 위치를 골라 보세요.");
+       : "검색 결과가 없습니다. 주소를 다시 확인하시거나, 아래 [지도로 찾기]로 위치를 골라 보세요.");
   document.querySelector(".sort").hidden = !total || fromMap;
 
   // 입력한 주소와 정확히 일치하는 결과를 맨 앞에, 나머지는 '유사 결과'로 구분
@@ -742,7 +763,7 @@ $("myLoc").onclick = () => {
 };
 $("mapUse").onclick = () => {
   if (!mapPick) return;
-  mapFallback = mapRegion ? Object.assign({ keyword: mapPick, jibun: mapPickJibun || mapPick }, mapRegion) : null;
+  mapFallback = mapRegion ? { source: "map", keyword: mapPick, items: [Object.assign({ jibun: mapPickJibun || mapPick }, mapRegion)] } : null;
   closeMap();
   $("q").value = mapPick;
   search(mapPick, 1);

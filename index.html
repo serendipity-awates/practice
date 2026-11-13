@@ -382,9 +382,20 @@ function isExact(keyword, j) {
 function render(r) {
   const list = $("list"), pager = $("pager");
   list.innerHTML = ""; pager.innerHTML = "";
-  const total = Number(r.common.totalCount);
-  setMsg(total ? `검색 결과 ${total.toLocaleString()}건` : "검색 결과가 없습니다. 주소를 다시 확인해 주세요.");
-  document.querySelector(".sort").hidden = !total;
+  let total = Number(r.common.totalCount), fromMap = false;
+  // 지도에서 고른 곳이 건물 없는 땅이라 주소 검색에 안 나오면 → 지도 위치의 행정동으로 대신 보여주기
+  const mf = mapFallback;
+  if (!total && mf && mf.keyword === curKeyword && mf.dong) {
+    r = { common: r.common, juso: [{
+      _noRoad: true, roadAddr: "", roadAddrPart1: "", roadAddrPart2: "", jibunAddr: mf.jibun, zipNo: "",
+      siNm: mf.si, sggNm: mf.sgg, emdNm: mf.bdong || "", liNm: "", hemdNm: `${mf.si} ${mf.sgg} ${mf.dong}`
+    }] };
+    total = 1; fromMap = true;
+  }
+  setMsg(fromMap ? "지도에서 고른 위치예요 · 도로명주소가 없는 곳이라 지번 기준으로 보여드려요"
+       : total ? `검색 결과 ${total.toLocaleString()}건`
+       : "검색 결과가 없습니다. 건물이 없는 땅(지번)은 주소 검색에 나오지 않아요. 아래 [지도로 찾기]로 위치를 골라 보세요.");
+  document.querySelector(".sort").hidden = !total || fromMap;
 
   // 입력한 주소와 정확히 일치하는 결과를 맨 앞에, 나머지는 '유사 결과'로 구분
   const rows = (r.juso || []).map(j => ({ j, exact: isExact(curKeyword, j) }));
@@ -414,12 +425,12 @@ function render(r) {
       </div>
       <div class="top">
         <div class="addr">
-          <div class="road"><span class="lbl">도로명</span><span>${esc(j.roadAddr)}</span></div>
+          <div class="road"><span class="lbl">도로명</span><span>${j._noRoad ? '<span style="color:var(--sub);font-weight:500">도로명주소 없음 (건물이 없는 땅)</span>' : esc(j.roadAddr)}</span></div>
           <div class="road"><span class="lbl">지번</span><span>${esc(j.jibunAddr)}</span></div>
           ${j.relJibun ? `<div class="rel"><b>관련지번</b>${esc(j.relJibun)}</div>` : ""}
           ${j.detBdNmList ? `<div class="rel"><b>상세건물명</b>${esc(String(j.detBdNmList).replace(/\s*,\s*/g, ", "))}</div>` : ""}
           <div class="meta">
-            <b>우편</b>${esc(j.zipNo)}<i>|</i><b>법정동</b>${esc(j.emdNm)} ${esc(j.liNm)}
+            ${j.zipNo ? `<b>우편</b>${esc(j.zipNo)}<i>|</i>` : ""}<b>법정동</b>${esc(j.emdNm)} ${esc(j.liNm)}
           </div>
           <div class="center"></div>
         </div>
@@ -456,10 +467,12 @@ function render(r) {
       showTel(tb.querySelector(".tel"), j, hdongs[i], tb.querySelector(".tel-lbl"), tb.querySelector(".tel-copy")));
     if (hdongs.length) showCenters(card.querySelector(".center"), j, hdongs);
     card.querySelector(".copy-road").onclick = () => copy(j.roadAddr);
+    if (j._noRoad) card.querySelector(".copy-road").remove();
     card.querySelector(".copy-jibun").onclick = () => copy(j.jibunAddr);
     const btn = card.querySelector(".detail-btn"), box = card.querySelector(".detail");
     const status = card.querySelector(".no-ho");
-    probeDetail(j).then(pr => {
+    if (j._noRoad) { status.classList.remove("loading"); status.textContent = "등록된 상세주소가 없습니다."; }
+    else probeDetail(j).then(pr => {
       if (pr.hasHo) { status.remove(); btn.hidden = false; }
       else { status.classList.remove("loading"); status.textContent = "등록된 상세주소가 없습니다."; }
     }, e => { status.classList.remove("loading"); status.textContent = "상세주소 조회 오류: " + e.message; });
@@ -678,17 +691,24 @@ document.querySelectorAll('input[name="sort"]').forEach(r =>
   r.onchange = () => { if (curKeyword) search(curKeyword, 1); });
 
 // ===== 지도로 찾기 (카카오 지도: 지도를 눌러 주소 확인 → 그 주소로 검색) =====
-let kmap = null, kmarker = null, kgeo = null, mapPick = "";
+let kmap = null, kmarker = null, kgeo = null, mapPick = "", mapPickJibun = "", mapRegion = null, mapFallback = null;
 function pickAt(latlng) {
   kmarker.setPosition(latlng); kmarker.setMap(kmap);
-  $("mapAddr").textContent = "주소 확인 중…"; $("mapUse").disabled = true; mapPick = "";
+  $("mapAddr").textContent = "주소 확인 중…"; $("mapUse").disabled = true; mapPick = ""; mapRegion = null;
+  // 행정동(H)·법정동(B) 이름도 함께 받아 두기 (건물 없는 땅일 때 사용)
+  kgeo.coord2RegionCode(latlng.getLng(), latlng.getLat(), (res, status) => {
+    if (status !== kakao.maps.services.Status.OK) return;
+    const h = res.find(x => x.region_type === "H"), b = res.find(x => x.region_type === "B");
+    if (h) mapRegion = { si: h.region_1depth_name, sgg: h.region_2depth_name, dong: h.region_3depth_name,
+                         bdong: b ? [b.region_3depth_name, b.region_4depth_name].filter(Boolean).join(" ") : "" };
+  });
   kgeo.coord2Address(latlng.getLng(), latlng.getLat(), (res, status) => {
     if (status !== kakao.maps.services.Status.OK || !res.length) {
       $("mapAddr").textContent = "이 위치의 주소를 찾지 못했어요. 건물이 있는 곳을 눌러 주세요."; return;
     }
     const road = res[0].road_address && res[0].road_address.address_name;
     const jibun = res[0].address && res[0].address.address_name;
-    mapPick = road || jibun;
+    mapPick = road || jibun; mapPickJibun = jibun || "";
     $("mapAddr").innerHTML = esc(road || jibun) + (road && jibun ? `<small>지번 ${esc(jibun)}</small>` : "");
     $("mapUse").disabled = false;
   });
@@ -722,6 +742,7 @@ $("myLoc").onclick = () => {
 };
 $("mapUse").onclick = () => {
   if (!mapPick) return;
+  mapFallback = mapRegion ? Object.assign({ keyword: mapPick, jibun: mapPickJibun || mapPick }, mapRegion) : null;
   closeMap();
   $("q").value = mapPick;
   search(mapPick, 1);

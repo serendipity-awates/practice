@@ -80,6 +80,9 @@
                margin: 0 -22px 18px; padding: 7px 22px; background: var(--accent); color: #F7F0E2; }
   .card-head .ch-dong { font-size: 13px; font-weight: 500; letter-spacing: -0.01em; }
   .card-head .ch-dong b { font-size: 15px; font-weight: 900; color: #fff; margin-left: 4px; }
+  .warn { margin: -4px 0 16px; padding: 10px 14px; border-radius: 10px; background: #FBF1DC; border: 1px solid #E9CF9A;
+          color: #5A3E14; font-size: 14px; font-weight: 500; line-height: 1.55; word-break: keep-all; }
+  .warn b { font-weight: 700; color: var(--accent-dark); }
   .card-head .match { margin: 0; padding: 2px 9px; font-size: 11px; background: #F7F2E4; color: var(--accent); }
   .similar-head { display: flex; align-items: center; gap: 10px; margin: 22px 4px 10px; font-size: 14px; font-weight: 700; color: var(--sub); }
   .similar-head::after { content: ""; flex: 1; height: 1px; background: var(--line); }
@@ -197,6 +200,7 @@
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
   @media (max-width: 640px) {
+    .warn { font-size: 13px; padding: 9px 12px; }
     .mapfind { font-size: 13px; padding: 10px 11px; }
     .maphead span { display: none; }
     .maphead { justify-content: space-between; }
@@ -444,6 +448,7 @@ function render(r) {
         <span class="ch-dong">관할 행정동<b>${hdongs.length ? hdongs.map(esc).join(" · ") : "정보 없음"}</b></span>
         ${exactN && exact ? '<span class="match">✓ 주소 일치</span>' : ""}
       </div>
+      ${j._noRoad ? `<div class="warn">⚠️ 도로명주소가 없는 곳이라 <b>관할 행정동이 실제와 다를 수 있어요.</b> 방문 전에 주민센터에 직접 확인해 보셔야 해요.</div>` : ""}
       <div class="top">
         <div class="addr">
           <div class="road"><span class="lbl">도로명</span><span>${j._noRoad ? '<span style="color:var(--sub);font-weight:500">도로명주소 없음 (건물이 없는 땅)</span>' : esc(j.roadAddr)}</span></div>

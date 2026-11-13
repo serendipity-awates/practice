@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+<meta name="robots" content="noindex">
+<title>위치 보기</title>
+<style>html, body { margin: 0; height: 100%; } #mapWrap { width: 100%; height: 100%; }</style>
+<!-- 도로명주소 지도제공 검색 API (business.juso.go.kr) · skinType 2: 위치/주소 상세정보 -->
+<script src="https://business.juso.go.kr/juso_support_center/js/addrlink/map/jusoro_map_api.min.js?confmKey=U01TX0FVVEgyMDI2MTExMzEwMTM0OTEyMTEyNjI=&skinType=2"></script>
+</head>
+<body>
+<!-- ※ id, class 속성을 바꾸면 지도 API가 동작하지 않을 수 있어요 -->
+<div id="mapWrap" class="mapWrap"></div>
+<script>
+// 사용법: jmap.html?q=검색어  또는  jmap.html?admCd=..&rnMgtSn=..&udrtYn=..&buldMnnm=..&buldSlno=..
+(function () {
+  var p = new URLSearchParams(location.search), params;
+  if (p.get("admCd") && p.get("rnMgtSn")) {
+    params = [p.get("admCd"), p.get("rnMgtSn"), p.get("udrtYn") || "0", p.get("buldMnnm") || "0", p.get("buldSlno") || "0"];
+  } else if (p.get("q")) {
+    params = [p.get("q")];
+  }
+  if (!params) return;
+  var tries = 0;
+  function go() {
+    window.postMessage({ functionName: "callJusoroMapApi", params: params }, "*");
+  }
+  window.addEventListener("load", function () {
+    // 지도 API 초기화 시간을 조금 기다렸다가 요청 (처음 한 번 실패해도 다시 시도)
+    var t = setInterval(function () { go(); if (++tries >= 2) clearInterval(t); }, 700);
+  });
+})();
+</script>
+</body>
+</html>

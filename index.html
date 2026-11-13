@@ -185,6 +185,7 @@
   .mapfoot .btn { padding: 12px 18px; font-size: 15px; white-space: nowrap; }
   .mapfoot .btn:disabled { opacity: .45; cursor: default; }
 
+  .jmapframe { display: block; width: 100%; height: min(65vh, 560px); border: 0; background: #eee; }
   .toast {
     position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%) translateY(20px);
     background: var(--ink); color: #fff; padding: 12px 20px; border-radius: 999px; font-weight: 700;
@@ -293,6 +294,13 @@
       <div class="mapaddr" id="mapAddr">지도를 눌러 위치를 선택하세요.</div>
       <button type="button" class="btn" id="mapUse" disabled>이 주소로 검색</button>
     </div>
+  </div>
+</div>
+<div class="mapmodal" id="jmapModal" hidden>
+  <div class="mapbox" role="dialog" aria-modal="true" aria-label="위치 보기">
+    <div class="maphead"><b id="jmapTitle">위치 보기</b><span>도로명주소 지도</span>
+      <button type="button" class="mapx" id="jmapClose" aria-label="닫기">✕</button></div>
+    <iframe id="jmapFrame" title="위치 지도" class="jmapframe"></iframe>
   </div>
 </div>
 <div class="toast" id="toast">복사했어요</div>
@@ -492,9 +500,10 @@ async function showCenters(el, j, hdongs) {
     row.className = "center-row";
     row.innerHTML = `<span class="lbl">주민센터</span><div><div><b>${esc(name)}</b> · ${esc(addr)}</div>` +
       `<div class="center-actions">` +
-      `<a class="mini map" href="https://map.kakao.com/?q=${encodeURIComponent(addr)}" target="_blank" rel="noopener">지도 보기 ↗</a>` +
+      `<button type="button" class="mini map">지도 보기</button>` +
       `<button type="button" class="mini addr-copy">주소 복사</button></div></div>`;
     row.querySelector(".addr-copy").onclick = () => copy(addr);
+    row.querySelector(".map").onclick = () => openJmap(name, "q=" + encodeURIComponent(addr));
     el.appendChild(row);
   });
 }
@@ -714,6 +723,17 @@ $("mapUse").onclick = () => {
   search(mapPick, 1);
   window.scrollTo({ top: 0, behavior: "smooth" });
 };
+
+// ===== 위치 보기 (도로명주소 지도제공 검색 API → jmap.html 을 창 안에 표시) =====
+function openJmap(title, query) {
+  $("jmapTitle").textContent = title;
+  $("jmapFrame").src = "jmap.html?" + query;
+  $("jmapModal").hidden = false;
+}
+function closeJmap() { $("jmapModal").hidden = true; $("jmapFrame").src = "about:blank"; }
+$("jmapClose").onclick = closeJmap;
+$("jmapModal").onclick = e => { if (e.target.id === "jmapModal") closeJmap(); };
+document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("jmapModal").hidden) closeJmap(); });
 
 $("f").onsubmit = e => {
   e.preventDefault();

@@ -76,18 +76,23 @@
   .match { display: inline-block; margin-bottom: 10px; padding: 4px 10px; border-radius: 999px;
            background: var(--accent); color: #fff; font-size: 12px; font-weight: 700; letter-spacing: -0.01em; }
   .card.exact { border: 2px solid var(--accent); }
+  .card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px;
+               margin: 0 -22px 18px; padding: 7px 22px; background: var(--accent); color: #F7F0E2; }
+  .card-head .ch-dong { font-size: 13px; font-weight: 500; letter-spacing: -0.01em; }
+  .card-head .ch-dong b { font-size: 15px; font-weight: 900; color: #fff; margin-left: 4px; }
+  .card-head .match { margin: 0; padding: 2px 9px; font-size: 11px; background: #F7F2E4; color: var(--accent); }
   .similar-head { display: flex; align-items: center; gap: 10px; margin: 22px 4px 10px; font-size: 14px; font-weight: 700; color: var(--sub); }
   .similar-head::after { content: ""; flex: 1; height: 1px; background: var(--line); }
   #msg { margin: 12px 4px 10px; color: var(--sub); font-size: 15px; }
   #msg.err { color: #b42318; font-weight: 700; }
 
   .card {
-    background: var(--card); border: 1px solid var(--line); border-radius: 18px;
-    padding: 20px 22px; margin-bottom: 14px; box-shadow: 0 2px 0 rgba(120, 90, 50, .06);
+    background: var(--card); border: 1px solid var(--line); border-radius: 18px; overflow: hidden;
+    padding: 0 22px 22px; margin-bottom: 14px; box-shadow: 0 2px 0 rgba(120, 90, 50, .06);
   }
   .top { display: flex; gap: 18px; align-items: flex-start; }
   .addr { flex: 1; min-width: 0; }
-  .road { display: flex; gap: 10px; align-items: baseline; font-size: 20px; font-weight: 700; line-height: 1.45; word-break: keep-all; }
+  .road { display: flex; gap: 10px; align-items: baseline; font-size: 22px; font-weight: 700; line-height: 1.45; word-break: keep-all; }
   .road + .road { margin-top: 8px; }
   .road .lbl { flex-shrink: 0; width: 54px; text-align: center; font-size: 13px; font-weight: 700; padding: 3px 9px; border-radius: 8px;
                background: var(--chip); color: var(--sub); position: relative; top: -2px; }
@@ -105,7 +110,7 @@
   .mini:hover { border-color: var(--accent); color: var(--accent); }
   .mini.map { color: var(--accent-dark); }
   .center:empty { display: none; }
-  .meta { margin-top: 10px; padding-left: 64px; color: #3C3C3C; font-size: 16px; font-weight: 500; line-height: 1.6; }
+  .meta { margin-top: 10px; padding-left: 64px; color: #3C3C3C; font-size: 17px; font-weight: 500; line-height: 1.6; }
   .meta b { color: var(--ink); font-weight: 700; margin-right: 4px; }
   .meta i { font-style: normal; margin: 0 8px; color: var(--line); }
 
@@ -119,7 +124,7 @@
   .tel { display: inline-block; margin-top: 8px; padding: 5px 12px; border-radius: 999px; background: #fff;
          color: var(--accent-dark); font-size: 15px; font-weight: 700; text-decoration: none; border: 1px solid #E3D3B1; }
   .tel:hover { background: var(--accent); color: #fff; }
-  .rel { margin-top: 4px; padding-left: 64px; font-size: 15px; color: #3C3C3C; line-height: 1.5; word-break: keep-all; }
+  .rel { margin-top: 4px; padding-left: 64px; font-size: 16px; color: #3C3C3C; line-height: 1.5; word-break: keep-all; }
   .rel b { color: var(--ink); font-weight: 700; margin-right: 6px; }
   .tel.muted { color: var(--sub); border-color: var(--line); font-size: 13px; font-weight: 500; }
   .tel:empty { display: none; }
@@ -175,17 +180,18 @@
     #q::placeholder { font-size: min(17px, calc((100vw - 133px) * 0.059)); font-weight: 500; letter-spacing: 0; }
     form .btn { padding: 0 18px; font-size: 17px; }
 
-    .card { padding: 16px 14px; border-radius: 16px; }
+    .card { padding: 0 14px 18px; border-radius: 16px; }
+    .card-head { margin: 0 -14px 14px; padding: 6px 14px; }
     .top { flex-direction: column; gap: 14px; }
     /* 휴대폰에서는 관할 행정동을 맨 위에 */
     .hdong { order: -1; width: 100%; min-width: 0; padding: 14px 12px; }
     .hdong strong { font-size: 28px; }
 
-    .road { font-size: 17px; gap: 8px; }
+    .road { font-size: 18px; gap: 8px; }
     .road .lbl, .center .lbl { width: 46px; font-size: 12px; }
     .meta, .rel { padding-left: 54px; }
-    .meta { font-size: 15px; }
-    .rel { font-size: 14px; }
+    .meta { font-size: 16px; }
+    .rel { font-size: 15px; }
     .center { font-size: 14px; }
     .center-row { gap: 8px; }
     .center-actions .mini { flex: 1; justify-content: center; }
@@ -346,7 +352,10 @@ function render(r) {
     const multi = hdongs.length > 1;
     const card = document.createElement("div");
     card.className = "card" + (exactN && exact ? " exact" : "");
-    card.innerHTML = `${exactN && exact ? '<span class="match">✓ 주소 일치</span>' : ""}
+    card.innerHTML = `<div class="card-head">
+        <span class="ch-dong">관할 행정동<b>${hdongs.length ? hdongs.map(esc).join(" · ") : "정보 없음"}</b></span>
+        ${exactN && exact ? '<span class="match">✓ 주소 일치</span>' : ""}
+      </div>
       <div class="top">
         <div class="addr">
           <div class="road"><span class="lbl">도로명</span><span>${esc(j.roadAddr)}</span></div>

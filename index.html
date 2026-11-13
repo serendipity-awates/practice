@@ -63,7 +63,11 @@
   .btn.ghost:hover { background: #e8d7bf; }
   .btn.sm { padding: 8px 14px; font-size: 14px; }
 
-  #msg { margin: 18px 4px 10px; color: var(--sub); font-size: 15px; }
+  .sort { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; margin: 14px 4px 0; font-size: 14px; color: var(--ink); }
+  .sort label { display: inline-flex; align-items: center; gap: 5px; font-weight: 700; cursor: pointer; }
+  .sort input { accent-color: var(--accent); width: 16px; height: 16px; margin: 0; cursor: pointer; }
+  .sort-help { font-size: 12px; font-weight: 500; color: var(--sub); word-break: keep-all; }
+  #msg { margin: 12px 4px 10px; color: var(--sub); font-size: 15px; }
   #msg.err { color: #b42318; font-weight: 700; }
 
   .card {
@@ -202,6 +206,12 @@
     <button class="btn">검색</button>
   </form>
 
+  <div class="sort" role="radiogroup" aria-label="정렬">
+    <label><input type="radio" name="sort" value="none" checked> 정확도순</label>
+    <label><input type="radio" name="sort" value="road"> 도로명 포함</label>
+    <label><input type="radio" name="sort" value="location"> 지번 포함</label>
+    <span class="sort-help">입력한 키워드가 선택한 항목에 포함되는 주소가 먼저 나오고, 도로명주소 순으로 정렬돼요.</span>
+  </div>
   <div id="msg"></div>
   <div id="list"></div>
   <div id="pager"></div>
@@ -270,7 +280,7 @@ async function search(keyword, page) {
   try {
     const r = await call("addrLinkApiJsonp.do", {
       confmKey: CONFM_KEY, currentPage: page, countPerPage: PER_PAGE, keyword,
-      hstryYn: "N", firstSort: "road", addInfoYn: "Y"
+      hstryYn: "N", firstSort: (document.querySelector('input[name="sort"]:checked') || {}).value || "none", addInfoYn: "Y"
     });
     render(r);
   } catch (e) { setMsg("오류: " + e.message, true); }
@@ -537,6 +547,9 @@ async function initDetail(j, box, juris) {
   sFloor.onchange = fillHo;
   sHo.onchange = showFull;
 }
+
+document.querySelectorAll('input[name="sort"]').forEach(r =>
+  r.onchange = () => { if (curKeyword) search(curKeyword, 1); });
 
 $("f").onsubmit = e => {
   e.preventDefault();

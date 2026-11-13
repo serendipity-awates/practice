@@ -201,7 +201,7 @@
 
   <form id="f">
     <div class="qwrap">
-      <input type="text" id="q" placeholder="도로명주소 또는 지번 (예: 신길동 51-3)" autofocus>
+      <input type="text" id="q" placeholder="도로명주소, 건물명 또는 지번 (예: 신길동 51-3)" autofocus>
     </div>
     <button class="btn">검색</button>
   </form>
@@ -547,6 +547,12 @@ async function initDetail(j, box, juris) {
   sFloor.onchange = fillHo;
   sHo.onchange = showFull;
 }
+
+// 검색창 안내 문구: PC는 건물명까지, 휴대폰은 폭이 좁아 짧게
+const PH_PC = "도로명주소, 건물명 또는 지번 (예: 신길동 51-3)", PH_MOBILE = "도로명주소 또는 지번 (예: 신길동 51-3)";
+const mqMobile = matchMedia("(max-width: 640px)");
+const setPh = () => { $("q").placeholder = mqMobile.matches ? PH_MOBILE : PH_PC; };
+setPh(); mqMobile.addEventListener("change", setPh);
 
 document.querySelectorAll('input[name="sort"]').forEach(r =>
   r.onchange = () => { if (curKeyword) search(curKeyword, 1); });
